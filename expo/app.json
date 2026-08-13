@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "UniPay",
+    "slug": "unipay",
+    "scheme": "unipay",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "plugins": ["expo-router"],
+    "ios": { "supportsTablet": true },
+    "android": { "adaptiveIcon": {} },
+    "web": { "bundler": "metro", "output": "single" },
+    "experiments": { "typedRoutes": false }
+  }
+}
