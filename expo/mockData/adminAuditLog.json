@@ -1,0 +1,8 @@
+[
+  { "id": "aud_010", "admin_user_id": "adm_001", "action": "rail.toggle_enabled", "target_type": "payment_rails", "target_id": "rail_card", "details": "is_enabled false -> true (staging test)", "created_at": "2026-08-13T12:41:00Z" },
+  { "id": "aud_009", "admin_user_id": "adm_002", "action": "identity.approve", "target_type": "profiles", "target_id": "prf_004", "details": "ID document verified, AI pre-check 0.93", "created_at": "2026-08-13T11:05:00Z" },
+  { "id": "aud_008", "admin_user_id": "adm_002", "action": "identity.reject", "target_type": "profiles", "target_id": "prf_005", "details": "Document expired", "created_at": "2026-08-13T10:52:00Z" },
+  { "id": "aud_007", "admin_user_id": "adm_001", "action": "exception.escalate", "target_type": "reconciliation_matches", "target_id": "rec_005", "details": "Ambiguous between two expected payments", "created_at": "2026-08-13T09:30:00Z" },
+  { "id": "aud_006", "admin_user_id": "adm_003", "action": "payout.retry", "target_type": "payouts", "target_id": "pay_004", "details": "Rail returned timeout, manual retry queued", "created_at": "2026-08-12T18:14:00Z" },
+  { "id": "aud_005", "admin_user_id": "adm_001", "action": "user.suspend_alias", "target_type": "aliases", "target_id": "als_005", "details": "Fraud report #221", "created_at": "2026-08-12T15:47:00Z" }
+]
