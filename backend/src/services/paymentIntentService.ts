@@ -293,7 +293,54 @@ export async function updatePaymentIntentStatus(
   return updated;
 }
 
+export async function listPaymentIntents(filters?: {
+  recipient_profile_id?: string;
+  status?: string;
+  limit?: number;
+}): Promise<PaymentIntentEntity[]> {
+  try {
+    let query = `SELECT * FROM payment_intents WHERE 1=1`;
+    const params: any[] = [];
+    let idx = 1;
+
+    if (filters?.recipient_profile_id) {
+      query += ` AND recipient_profile_id = $${idx++}`;
+      params.push(filters.recipient_profile_id);
+    }
+    if (filters?.status) {
+      query += ` AND status = $${idx++}`;
+      params.push(filters.status);
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT $${idx}`;
+    params.push(filters?.limit || 100);
+
+    const { rows } = await pool.query(query, params);
+    if (rows.length > 0) {
+      return rows.map((r) => ({
+        ...r,
+        amount: Number(r.amount),
+      }));
+    }
+  } catch (err) {
+    rootLogger.debug('Falling back to memory store for listPaymentIntents', {
+      error: (err as Error).message,
+    });
+  }
+
+  let list = Array.from(inMemoryIntents.values());
+  if (filters?.recipient_profile_id) {
+    list = list.filter((i) => i.recipient_profile_id === filters.recipient_profile_id);
+  }
+  if (filters?.status) {
+    list = list.filter((i) => i.status === filters.status);
+  }
+
+  return list.slice(0, filters?.limit || 100);
+}
+
 export function clearPaymentIntentCache(): void {
   inMemoryIntents.clear();
   idempotencyKeyMap.clear();
 }
+

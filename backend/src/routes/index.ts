@@ -5,6 +5,8 @@ import { aliasesRouter } from './aliases';
 import { checkoutRouter } from './checkout';
 import { paymentIntentsRouter } from './paymentIntents';
 import { webhooksRouter } from './webhooks';
+import { reconciliationRouter } from './reconciliation';
+import { aiRouter } from './ai';
 import { stubsRouter } from './stubs';
 
 export const apiRouter = Router();
@@ -23,7 +25,14 @@ apiRouter.use('/api/v1/checkout', checkoutRouter);
 apiRouter.use('/api/v1/payment-intents', paymentIntentsRouter);
 apiRouter.use('/api/v1/webhooks', webhooksRouter);
 
+// Phase 4A Live Endpoints: Reconciliation Engine & Exceptions
+apiRouter.use('/api/v1/reconciliation', reconciliationRouter);
+
+// Phase 4B Live Endpoints: AI Intelligence & Natural-Language Queries
+apiRouter.use('/api/v1/ai', aiRouter);
+
 // §18 & Phase 4B API Endpoints stubs mounted at /api/v1
 apiRouter.use('/api/v1', stubsRouter);
+
 
 

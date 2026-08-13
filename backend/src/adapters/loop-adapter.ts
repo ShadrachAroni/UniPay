@@ -145,6 +145,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: 'grant_type=client_credentials',
+        signal: AbortSignal.timeout(500),
       });
 
       if (res.ok) {
@@ -210,6 +211,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
           'X-Loop-Version': '2024-01',
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(500),
       });
 
       if (res.ok) {
@@ -307,6 +309,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
             'X-Loop-Version': '2024-01',
           },
           body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(500),
         }
       );
       if (res.ok) {

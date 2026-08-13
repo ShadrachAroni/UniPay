@@ -13,6 +13,10 @@ import {
   PaymentRail,
   IdentifierType,
   VerificationStatus,
+  ReconciliationMatch,
+  ReconciliationException,
+  ReconciliationExceptionCategory,
+  ReconciliationExceptionStatus,
 } from './models';
 
 // Standard 501 Not Implemented Response format for Phase 0 stubs
@@ -174,28 +178,52 @@ export interface ListTransactionsResponse {
 
 // POST /api/v1/reconciliation/run
 export interface RunReconciliationRequest {
-  date_from: string;
-  date_to: string;
-  rail?: PaymentRail;
+  profile_id?: string;
+  date_from?: string;
+  date_to?: string;
+  rail?: PaymentRail | string;
 }
 export interface RunReconciliationResponse {
   job_id: string;
   status: 'started' | 'completed';
   matched_count: number;
   exception_count: number;
+  matches?: ReconciliationMatch[];
+  exceptions?: ReconciliationException[];
+  duration_ms?: number;
 }
 
 // GET /api/v1/reconciliation/exceptions
-export interface ListReconciliationExceptionsResponse {
-  exceptions: Array<{
-    id: string;
-    transaction_id?: string;
-    rail_reference: string;
-    amount: number;
-    reason: string;
-    detected_at: string;
-  }>;
+export interface ListReconciliationExceptionsRequest {
+  profile_id?: string;
+  category?: ReconciliationExceptionCategory;
+  status?: ReconciliationExceptionStatus;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  offset?: number;
 }
+
+export interface ListReconciliationExceptionsResponse {
+  exceptions: ReconciliationException[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// GET /api/v1/reconciliation/metrics
+export interface ReconciliationDashboardMetrics {
+  gross_collections: number;
+  net_collections: number;
+  total_fees: number;
+  successful_payments_count: number;
+  pending_settlements_count: number;
+  failed_payments_count: number;
+  reconciliation_rate: number;
+  open_exceptions_count: number;
+  currency: string;
+}
+
 
 // GET /api/v1/exports/transactions.csv
 // (Returns CSV text stream)
@@ -225,16 +253,21 @@ export interface CreatePayoutResponse {
   payout: Payout;
 }
 
-// AI Queries
-export interface AiQueryRequest {
-  prompt: string;
-  context_profile_id?: string;
+// POST /api/v1/ai/query (§15, §18)
+export interface AIDashboardQueryRequest {
+  query: string;
 }
-export interface AiQueryResponse {
-  response: string;
-  suggested_actions?: string[];
-  sources_cited?: string[];
+export interface AIDashboardQueryResponse {
+  answer: string;
+  explanation: string;
+  filters_applied?: Record<string, unknown>;
+  aggregation?: string;
+  data?: unknown;
 }
+
+// Legacy alias for backward compatibility
+export type AiQueryRequest = AIDashboardQueryRequest;
+export type AiQueryResponse = AIDashboardQueryResponse;
 
 // Phase 4B Expected Payments
 export interface CreateExpectedPaymentRequest {

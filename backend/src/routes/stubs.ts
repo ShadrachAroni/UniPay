@@ -23,10 +23,9 @@ function createStubHandler(phase: number, description: string) {
 // Phase 2 & 3: Payment Rails, Payment Intents & Webhooks are implemented live in checkout.ts, paymentIntents.ts, webhooks.ts
 
 
-// Phase 3: Transactions, Reconciliation & Exports
+// Phase 3 & 4A: Transactions, Reconciliation & Exports
 stubsRouter.get('/transactions', createStubHandler(3, 'List ledger transactions with filters'));
-stubsRouter.post('/reconciliation/run', createStubHandler(3, 'Trigger automated reconciliation run'));
-stubsRouter.get('/reconciliation/exceptions', createStubHandler(3, 'List unreconciled transaction exceptions'));
+// /reconciliation/run and /reconciliation/exceptions are implemented live in reconciliation.ts
 stubsRouter.get('/exports/transactions.csv', createStubHandler(3, 'Export transaction ledger as CSV'));
 
 // Phase 4: Balances, Money Direction & Payouts
@@ -37,8 +36,8 @@ stubsRouter.post('/payouts', createStubHandler(4, 'Initiate manual or scheduled 
 stubsRouter.get('/payouts/:id', createStubHandler(4, 'Get payout status'));
 stubsRouter.get('/payouts', createStubHandler(4, 'List historical payouts'));
 
-// Phase 5: AI Queries & Support Assistant
-stubsRouter.post('/ai/query', createStubHandler(5, 'AI-assisted transaction search and financial analysis'));
+// Phase 4B / Phase 5: AI Queries & Support Assistant
+// /ai/query is live in ai.ts
 stubsRouter.post('/ai/support', createStubHandler(5, 'AI conversational customer support assistant'));
 
 // Phase 6: Admin Operations
