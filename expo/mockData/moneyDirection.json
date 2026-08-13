@@ -1,0 +1,29 @@
+[
+  {
+    "id": "mdr_001",
+    "profile_id": "prf_001",
+    "destination_type": "loop_account",
+    "allocation_type": "percentage",
+    "allocation_value": 60,
+    "priority_order": 1,
+    "is_active": true
+  },
+  {
+    "id": "mdr_002",
+    "profile_id": "prf_001",
+    "destination_type": "loop_account",
+    "allocation_type": "percentage",
+    "allocation_value": 25,
+    "priority_order": 2,
+    "is_active": true
+  },
+  {
+    "id": "mdr_003",
+    "profile_id": "prf_001",
+    "destination_type": "keep_as_balance",
+    "allocation_type": "percentage",
+    "allocation_value": 15,
+    "priority_order": 3,
+    "is_active": true
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "prf_001",
+    "account_type": "business",
+    "display_name": "Mama Njeri Grocers",
+    "owner_name": "Njeri Wanjiku",
+    "phone": "+254712345678",
+    "email": "njeri@mamanjeri.co.ke",
+    "currency": "KES",
+    "verification_status": "verified",
+    "id_document_url": "https://files.unipay.test/id/prf_001.jpg"
+  },
+  {
+    "id": "prf_002",
+    "account_type": "individual",
+    "display_name": "Brian Otieno",
+    "owner_name": "Brian Otieno",
+    "phone": "+254733112233",
+    "email": "brian.otieno@example.com",
+    "currency": "KES",
+    "verification_status": "pending",
+    "id_document_url": "https://files.unipay.test/id/prf_002.jpg"
+  },
+  {
+    "id": "prf_003",
+    "account_type": "business",
+    "display_name": "Kilimani Fitness Hub",
+    "owner_name": "Achieng Odhiambo",
+    "phone": "+254701998877",
+    "email": "hello@kilimanifit.co.ke",
+    "currency": "KES",
+    "verification_status": "pending",
+    "id_document_url": "https://files.unipay.test/id/prf_003.jpg"
+  },
+  {
+    "id": "prf_004",
+    "account_type": "individual",
+    "display_name": "Faith Mutiso",
+    "owner_name": "Faith Mutiso",
+    "phone": "+254722445566",
+    "email": "faith.m@example.com",
+    "currency": "KES",
+    "verification_status": "verified",
+    "id_document_url": null
+  },
+  {
+    "id": "prf_005",
+    "account_type": "business",
+    "display_name": "Westlands Auto Spares",
+    "owner_name": "Samuel Kariuki",
+    "phone": "+254745667788",
+    "email": "sam@westlandsauto.co.ke",
+    "currency": "KES",
+    "verification_status": "rejected",
+    "id_document_url": "https://files.unipay.test/id/prf_005.jpg"
+  }
+]
