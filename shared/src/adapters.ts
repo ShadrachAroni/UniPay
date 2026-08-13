@@ -1,8 +1,8 @@
 /**
  * UniPay Provider-Adapter Architecture Interface & Supporting Types
- * Ground Truth: §9b, §10, §11 (UniPay Technical Documentation)
+ * Ground Truth: §9, §9b, §10, §11 (UniPay Technical Documentation)
  * 
- * Every payment rail (LOOP today, seeded fixture, M-Pesa/PesaLink later)
+ * Every payment rail (LOOP, Seeded/Future-Rail, M-Pesa, PesaLink)
  * must implement this contract identically so checkout, the ledger,
  * and reconciliation never contain rail-specific logic.
  */
@@ -118,5 +118,5 @@ export interface PaymentProviderAdapter {
   refund(request: RefundRequest): Promise<ProviderRefundResult>;
   disburse(request: DisbursementRequest): Promise<ProviderPayoutResult>;
   normalize(payload: unknown): NormalizedTransaction;
-  verifyWebhook(req: unknown): boolean;
+  verifyWebhook(req: WebhookRequestLike | unknown): boolean;
 }
