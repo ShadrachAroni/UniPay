@@ -3,7 +3,7 @@ import { PaymentRailsRepository } from '../../repository/payment-rails.repositor
 import { MoneyDirectionRulesRepository } from '../../repository/money-direction-rules.repository.js';
 import { PayoutsRepository } from '../../repository/payouts.repository.js';
 import { BalanceService } from './balance.service.js';
-import { MoneyDirectionEngine } from './money-direction.engine.ts';
+import { MoneyDirectionEngine } from './money-direction.fengine.ts';
 import {
   Settlement,
   Payout,
@@ -22,7 +22,7 @@ export class DisbursementService {
     private readonly rulesRepo: MoneyDirectionRulesRepository,
     private readonly payoutsRepo: PayoutsRepository,
     private readonly balanceService: BalanceService
-  ) {}
+  ) { }
 
   /**
    * Automatic Settlement Routing (Handbook M1 / §9)
