@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { requestContextMiddleware } from './middleware/requestContext';
 import { optionalAuth } from './middleware/auth';
+import { idempotencyMiddleware } from './middleware/idempotency';
 import { errorHandler } from './middleware/errorHandler';
 import { apiRouter } from './routes';
 import { healthRouter } from './routes/health';
@@ -34,6 +35,9 @@ export function createApp(): Express {
 
   // Optional authentication check
   app.use(optionalAuth);
+
+  // Idempotency check & replay caching for write operations (Handbook M8.3)
+  app.use(idempotencyMiddleware());
 
   // Direct root health endpoint /health
   app.use(healthRouter);

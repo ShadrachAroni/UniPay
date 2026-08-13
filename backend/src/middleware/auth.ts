@@ -2,6 +2,33 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '@clerk/backend';
 import { env } from '../config/env';
 
+/**
+ * Public Route Allowlist: Checkout and health routes stay unauthenticated by design (§19)
+ */
+export function isPublicRoute(path: string, method: string): boolean {
+  // Direct health routes
+  if (path === '/health' || path === '/api/v1/health') {
+    return true;
+  }
+
+  // Payer-facing checkout routes
+  if (path.startsWith('/api/v1/checkout')) {
+    return true;
+  }
+
+  // Public alias resolution for payers / QR checkout scanning
+  if (method === 'GET' && path.startsWith('/api/v1/aliases/')) {
+    return true;
+  }
+
+  // Provider webhooks (verified by signature in Phase 2/3)
+  if (path.startsWith('/api/v1/webhooks')) {
+    return true;
+  }
+
+  return false;
+}
+
 export async function optionalAuth(
   req: Request,
   _res: Response,
@@ -25,8 +52,8 @@ export async function optionalAuth(
         req.logger = req.logger.child({ user_id: req.userId });
       }
     } else {
-      // In test/development placeholder mode, accept dummy test tokens
-      if (token.startsWith('test_user_') || token.startsWith('user_')) {
+      // In test/development placeholder mode, accept test tokens
+      if (token.startsWith('test_') || token.startsWith('user_')) {
         req.userId = token;
         req.logger = req.logger.child({ user_id: req.userId });
       }
@@ -38,11 +65,22 @@ export async function optionalAuth(
   next();
 }
 
+/**
+ * Protects routes requiring authentication.
+ * Bypasses public checkout/health/webhook routes automatically.
+ */
 export function requireAuth(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
+  const path = req.path;
+  const method = req.method;
+
+  if (isPublicRoute(path, method)) {
+    return next();
+  }
+
   optionalAuth(req, res, () => {
     if (!req.userId) {
       res.status(401).json({
@@ -55,4 +93,3 @@ export function requireAuth(
     next();
   });
 }
-

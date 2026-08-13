@@ -31,9 +31,9 @@ const PII_PATTERNS = [
     regex: /\b(?:id_number|national_id|id)\s*[:=]\s*["']?\d{6,9}["']?/gi,
     replace: 'id:[REDACTED_ID]',
   },
-  // Document URLs (S3/Supabase storage URLs with docs/passports)
+  // Document & Selfie URLs (S3/Supabase storage URLs with docs/passports/selfies)
   {
-    regex: /https?:\/\/[^\s"']+\/(?:documents|passports|ids|kyc)\/[^\s"']+/gi,
+    regex: /https?:\/\/[^\s"']+\/(?:documents|passports|ids|kyc|selfies|faces)\/[^\s"']+/gi,
     replace: '[REDACTED_DOC_URL]',
   },
 ];
@@ -61,7 +61,10 @@ export function redactPII(input: unknown): unknown {
         lowerKey.includes('key') ||
         lowerKey.includes('token') ||
         lowerKey.includes('id_number') ||
-        lowerKey.includes('national_id')
+        lowerKey.includes('national_id') ||
+        lowerKey.includes('id_document_url') ||
+        lowerKey.includes('id_selfie_url') ||
+        lowerKey.includes('selfie')
       ) {
         output[key] = '[REDACTED]';
       } else {

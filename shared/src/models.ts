@@ -5,12 +5,19 @@
 
 export type AccountType = 'individual' | 'business';
 
+export type ProfileStatus = 'active' | 'suspended' | 'closed';
+
 export type VerificationStatus =
-  | 'unverified'
+  | 'unsubmitted'
   | 'submitted'
-  | 'in_review'
-  | 'verified'
+  | 'ai_precheck_passed'
+  | 'ai_precheck_flagged'
+  | 'approved'
   | 'rejected';
+
+export type IdentifierType = 'alias' | 'qr' | 'link';
+
+export type AliasStatus = 'active' | 'revoked';
 
 export type PaymentRail = 'loop' | 'mpesa' | 'pesalink';
 
@@ -31,25 +38,34 @@ export type MoneyDirectionRuleType =
 
 export interface Profile {
   id: string;
-  clerk_id: string;
   account_type: AccountType;
-  primary_alias: string;
   display_name: string;
-  email?: string;
-  phone_number?: string;
+  owner_name: string;
+  clerk_user_id: string;
+  phone?: string | null;
+  email?: string | null;
+  currency: string;
+  country_code: string;
+  status: ProfileStatus;
   verification_status: VerificationStatus;
-  business_name?: string;
-  business_registration_number?: string;
+  id_number?: string | null;
+  id_document_url?: string | null;
+  id_selfie_url?: string | null;
+  id_submitted_at?: string | null;
+  id_reviewed_at?: string | null;
+  id_reviewer_note?: string | null;
+  id_ai_check_result?: Record<string, unknown> | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Alias {
   id: string;
   profile_id: string;
-  alias_handle: string; // e.g. "shadrach" or "mama-mboga"
-  qr_code_url: string;
-  is_active: boolean;
+  alias: string; // e.g. "@amina"
+  identifier_type: IdentifierType;
+  is_verified: boolean;
+  status: AliasStatus;
   created_at: string;
 }
 

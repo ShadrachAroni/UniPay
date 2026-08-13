@@ -16,7 +16,7 @@
     "build:app": "npm run build --workspace=app",
     "build": "npm run build:shared && npm run build:backend",
     "export:web": "npm run export:web --workspace=app",
-    "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=backend && npm run typecheck --workspace=app",
+    "typecheck": "npm run build:shared && npm run typecheck --workspace=shared && npm run typecheck --workspace=backend && npm run typecheck --workspace=app",
     "test": "npm run test --workspace=backend",
     "migrate": "npm run migrate --workspace=backend",
     "postinstall": "node scripts/patch_metro.js"

@@ -16,16 +16,9 @@ function createStubHandler(phase: number, description: string) {
 }
 
 // -------------------------------------------------------------
-// §18 Core Endpoints (Phases 1-6)
+// §18 Core Endpoints (Phases 2-6)
+// Phase 1 (Profiles, Aliases & Identity) is implemented live in profiles.ts & aliases.ts
 // -------------------------------------------------------------
-
-// Phase 1: Profiles & Identity
-stubsRouter.post('/profiles', createStubHandler(1, 'Create user or merchant profile'));
-stubsRouter.post('/profiles/:id/aliases', createStubHandler(1, 'Generate new alias/QR for profile'));
-stubsRouter.get('/aliases/:alias', createStubHandler(1, 'Lookup public profile by alias handle'));
-stubsRouter.post('/profiles/:id/identity', createStubHandler(1, 'Submit KYC identity documents'));
-stubsRouter.get('/profiles/:id/identity', createStubHandler(1, 'Fetch KYC identity status'));
-stubsRouter.post('/profiles/:id/identity/review', createStubHandler(1, 'Manual admin review of KYC submission'));
 
 // Phase 2: Payment Rails & LOOP Integration
 stubsRouter.post('/payment-intents', createStubHandler(2, 'Initiate payment intent on LOOP/M-Pesa rail'));
@@ -58,7 +51,8 @@ stubsRouter.put('/admin/payment-rails/:id', createStubHandler(6, 'Admin update p
 stubsRouter.get('/admin/audit-logs', createStubHandler(6, 'Admin security audit log search'));
 
 // Phase 7: Checkout
-stubsRouter.post('/checkout/payment-options', createStubHandler(7, 'Query available checkout payment options'));
+// POST /checkout/payment-options is live in checkout.ts
+
 
 // -------------------------------------------------------------
 // Phase 4B Expected & Pooled Payments Additions

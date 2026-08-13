@@ -11,6 +11,8 @@ import {
   Payout,
   AccountType,
   PaymentRail,
+  IdentifierType,
+  VerificationStatus,
 } from './models';
 
 // Standard 501 Not Implemented Response format for Phase 0 stubs
@@ -41,22 +43,28 @@ export interface HealthCheckResponse {
 
 // POST /api/v1/profiles
 export interface CreateProfileRequest {
-  clerk_id: string;
   account_type: AccountType;
-  primary_alias: string;
   display_name: string;
+  owner_name: string;
+  phone?: string;
   email?: string;
-  phone_number?: string;
-  business_name?: string;
-  business_registration_number?: string;
+  currency?: string;
+  country_code?: string;
 }
 export interface CreateProfileResponse {
   profile: Profile;
 }
 
+// GET /api/v1/profiles/:id or GET /api/v1/profiles/me
+export interface GetProfileResponse {
+  profile: Profile;
+  aliases?: Alias[];
+}
+
 // POST /api/v1/profiles/:id/aliases
 export interface CreateAliasRequest {
-  alias_handle: string;
+  alias: string; // e.g. "@amina" or "amina"
+  identifier_type?: IdentifierType;
 }
 export interface CreateAliasResponse {
   alias: Alias;
@@ -65,7 +73,43 @@ export interface CreateAliasResponse {
 // GET /api/v1/aliases/:alias
 export interface GetAliasResponse {
   alias: Alias;
-  profile: Pick<Profile, 'id' | 'display_name' | 'account_type' | 'primary_alias' | 'verification_status'>;
+  recipient: {
+    profile_id: string;
+    display_name: string;
+    owner_name: string;
+    account_type: AccountType;
+    verification_status: VerificationStatus;
+    currency: string;
+  };
+}
+
+// POST /api/v1/profiles/:id/identity
+export interface SubmitIdentityRequest {
+  id_number: string;
+  id_document_url: string;
+  id_selfie_url?: string;
+}
+export interface SubmitIdentityResponse {
+  profile: Profile;
+  message: string;
+}
+
+// GET /api/v1/profiles/:id/identity
+export interface GetIdentityResponse {
+  verification_status: VerificationStatus;
+  id_submitted_at?: string | null;
+  id_reviewed_at?: string | null;
+  id_reviewer_note?: string | null;
+}
+
+// POST /api/v1/profiles/:id/identity/review (Admin / Manual Toggle)
+export interface ReviewIdentityRequest {
+  decision: 'approved' | 'rejected';
+  reviewer_note?: string;
+}
+export interface ReviewIdentityResponse {
+  profile: Profile;
+  message: string;
 }
 
 // POST /api/v1/checkout/payment-options
