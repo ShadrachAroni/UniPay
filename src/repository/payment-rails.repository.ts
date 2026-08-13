@@ -66,7 +66,7 @@ export const defaultSeededCapabilities: ProviderCapabilities = {
 export const defaultLoopCapabilities: ProviderCapabilities = {
   collection: true,
   statusInquiry: true,
-  refund: true,
+  refund: false,
   disbursement: true,
   webhooks: true,
   supportedCurrencies: ['KES'],

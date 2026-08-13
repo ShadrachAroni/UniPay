@@ -38,7 +38,7 @@ VALUES
     '{KE}',
     1.00,
     250000.00,
-    '{"collection": true, "statusInquiry": true, "refund": true, "disbursement": true, "webhooks": true, "supportedCurrencies": ["KES"], "supportedCountries": ["KE"]}'::jsonb
+    '{"collection": true, "statusInquiry": true, "refund": false, "disbursement": true, "webhooks": true, "supportedCurrencies": ["KES"], "supportedCountries": ["KE"]}'::jsonb
   )
 ON CONFLICT (adapter_key) DO UPDATE SET
   name = EXCLUDED.name,
