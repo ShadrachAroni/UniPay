@@ -20,11 +20,8 @@ function createStubHandler(phase: number, description: string) {
 // Phase 1 (Profiles, Aliases & Identity) is implemented live in profiles.ts & aliases.ts
 // -------------------------------------------------------------
 
-// Phase 2: Payment Rails & LOOP Integration
-stubsRouter.post('/payment-intents', createStubHandler(2, 'Initiate payment intent on LOOP/M-Pesa rail'));
-stubsRouter.get('/payment-intents/:id', createStubHandler(2, 'Query payment intent status'));
-stubsRouter.post('/payment-intents/:id/retry', createStubHandler(2, 'Retry payment intent with idempotency'));
-stubsRouter.post('/webhooks/loop', createStubHandler(2, 'LOOP asynchronous payment webhook handler'));
+// Phase 2 & 3: Payment Rails, Payment Intents & Webhooks are implemented live in checkout.ts, paymentIntents.ts, webhooks.ts
+
 
 // Phase 3: Transactions, Reconciliation & Exports
 stubsRouter.get('/transactions', createStubHandler(3, 'List ledger transactions with filters'));

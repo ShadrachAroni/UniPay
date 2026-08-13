@@ -147,23 +147,23 @@ describe('Phase 2 Verification Test Suite — Provider Adapter Architecture & Pa
     });
 
     it('strictly excludes disabled rails from resolution when is_enabled = false', async () => {
-      // 1. Verify rail resolves initially
+      // 1. Verify seeded rail resolves initially
       const initial = await getEnabledRailsFor('KES', 'KE', 3000);
-      assert.strictEqual(initial.length, 1);
+      assert.ok(initial.some((r) => r.adapter_key === 'seeded'));
 
-      // 2. Disable rail
+      // 2. Disable seeded rail
       await setRailEnabled('seeded', false);
       const rail = await getRailByAdapterKey('seeded');
       assert.strictEqual(rail?.is_enabled, false);
 
-      // 3. Verify it is now excluded
+      // 3. Verify seeded rail is now excluded from enabled list
       const afterDisable = await getEnabledRailsFor('KES', 'KE', 3000);
-      assert.strictEqual(afterDisable.length, 0);
+      assert.strictEqual(afterDisable.some((r) => r.adapter_key === 'seeded'), false);
 
-      // 4. Re-enable rail
+      // 4. Re-enable seeded rail
       await setRailEnabled('seeded', true);
       const afterReenable = await getEnabledRailsFor('KES', 'KE', 3000);
-      assert.strictEqual(afterReenable.length, 1);
+      assert.ok(afterReenable.some((r) => r.adapter_key === 'seeded'));
     });
 
     it('AdapterRegistry registers, retrieves, and enforces adapter existence', () => {
@@ -397,6 +397,7 @@ describe('Phase 2 Verification Test Suite — Provider Adapter Architecture & Pa
 
     it('returns 422 when all rails for currency/country are disabled', async () => {
       await setRailEnabled('seeded', false);
+      await setRailEnabled('loop', false);
 
       const res = await fetch(`${baseUrl}/api/v1/checkout/payment-options`, {
         method: 'POST',

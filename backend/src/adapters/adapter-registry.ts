@@ -1,5 +1,6 @@
 import { PaymentProviderAdapter } from '@unipay/shared';
 import { SeededRailAdapter } from './seeded-rail-adapter';
+import { LoopAdapter } from './loop-adapter';
 import { ResilientAdapterWrapper } from './resilient-adapter-wrapper';
 
 export class ProviderNotFoundError extends Error {
@@ -42,6 +43,7 @@ export class AdapterRegistry {
   }
 }
 
-// Default system singleton registry pre-populated with SeededRailAdapter
+// Default system singleton registry pre-populated with SeededRailAdapter and LoopAdapter
 export const defaultAdapterRegistry = new AdapterRegistry();
 defaultAdapterRegistry.register('seeded', new SeededRailAdapter());
+defaultAdapterRegistry.register('loop', new LoopAdapter());

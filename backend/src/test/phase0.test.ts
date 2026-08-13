@@ -50,7 +50,6 @@ describe('Phase 0 Verification Test Suite', () => {
     });
 
     const sampleEndpoints = [
-      { method: 'POST', path: '/api/v1/payment-intents', phase: 2 },
       { method: 'GET', path: '/api/v1/transactions', phase: 3 },
       { method: 'POST', path: '/api/v1/reconciliation/run', phase: 3 },
       { method: 'POST', path: '/api/v1/payouts', phase: 4 },

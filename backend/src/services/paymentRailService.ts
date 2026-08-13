@@ -20,11 +20,11 @@ export interface PaymentRailEntity {
 // In-memory fallback store for offline tests and DB unreachability
 const inMemoryRails = new Map<string, PaymentRailEntity>();
 
-function initDefaultSeededRail(): void {
-  const seededId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+function initDefaultRails(): void {
   const now = new Date().toISOString();
+
   const seededRail: PaymentRailEntity = {
-    id: seededId,
+    id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
     name: 'Seeded Rail (Simulated Fixture)',
     adapter_key: 'seeded',
     is_enabled: true,
@@ -50,10 +50,38 @@ function initDefaultSeededRail(): void {
     updated_at: now,
   };
   inMemoryRails.set(seededRail.adapter_key.toLowerCase(), seededRail);
+
+  const loopRail: PaymentRailEntity = {
+    id: 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e',
+    name: 'LOOP Mobile Money (NCBA)',
+    adapter_key: 'loop',
+    is_enabled: true,
+    supported_currencies: ['KES'],
+    supported_countries: ['KE'],
+    min_amount: 10.0,
+    max_amount: 500000.0,
+    capabilities_json: {
+      collection: true,
+      statusInquiry: true,
+      refund: false,
+      disbursement: true,
+      webhooks: true,
+      supportedCurrencies: ['KES'],
+      supportedCountries: ['KE'],
+      settlementEstimate: 'instant',
+      feeStructure: {
+        fixed: 0,
+        percentage: 0.015,
+      },
+    },
+    created_at: now,
+    updated_at: now,
+  };
+  inMemoryRails.set(loopRail.adapter_key.toLowerCase(), loopRail);
 }
 
-// Initialize default seeded rail
-initDefaultSeededRail();
+// Initialize default seeded and loop rails
+initDefaultRails();
 
 export async function getRailByAdapterKey(adapterKey: string): Promise<PaymentRailEntity | null> {
   const key = adapterKey.toLowerCase();
@@ -190,5 +218,5 @@ export async function listAllRails(): Promise<PaymentRailEntity[]> {
 
 export function resetRailCache(): void {
   inMemoryRails.clear();
-  initDefaultSeededRail();
+  initDefaultRails();
 }
