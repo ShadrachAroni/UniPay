@@ -1,0 +1,47 @@
+name: UniPay CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, DEV-A, dev-a, dev-c]
+  pull_request:
+    branches: [main, DEV-A]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Monorepo Quality Gates (Typecheck, Test, Build, Expo Export)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Run Metro Patch Postinstall
+        run: node scripts/patch_metro.js
+
+      - name: Typecheck Workspaces
+        run: npm run typecheck
+
+      - name: Build Shared & Backend
+        run: npm run build
+
+      - name: Run Backend Test Suite
+        run: npm run test
+
+      - name: Verify Expo Static Web Export
+        run: npm run export:web
+
+      - name: Security Audit (High & Critical)
+        run: npm audit --audit-level=high || echo "::warning::Vulnerabilities found, review dependencies"
