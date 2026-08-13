@@ -1,0 +1,58 @@
+{
+  "name": "unipay-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UniPay v4.0 — Unified Payment, Identity & Reconciliation Platform for Kenya (KES / LOOP)",
+  "workspaces": [
+    "shared",
+    "backend",
+    "app"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:app": "npm run dev --workspace=app",
+    "build:shared": "npm run build --workspace=shared",
+    "build:backend": "npm run build --workspace=backend",
+    "build:app": "npm run build --workspace=app",
+    "build": "npm run build:shared && npm run build:backend",
+    "export:web": "npm run export:web --workspace=app",
+    "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=backend && npm run typecheck --workspace=app",
+    "test": "npm run test --workspace=backend",
+    "migrate": "npm run migrate --workspace=backend",
+    "postinstall": "node scripts/patch_metro.js"
+  },
+  "keywords": [
+    "unipay",
+    "payments",
+    "loop",
+    "mpesa",
+    "pesalink",
+    "kenya",
+    "expo",
+    "react-native",
+    "express",
+    "typescript"
+  ],
+  "author": "UniPay Team",
+  "license": "MIT",
+  "overrides": {
+    "react-native": "0.76.6",
+    "@react-native/community-cli-plugin": "0.76.6",
+    "metro": "0.81.5",
+    "metro-config": "0.81.5",
+    "metro-core": "0.81.5",
+    "metro-cache": "0.81.5",
+    "metro-cache-key": "0.81.5",
+    "metro-file-map": "0.81.5",
+    "metro-minify-terser": "0.81.5",
+    "metro-resolver": "0.81.5",
+    "metro-runtime": "0.81.5",
+    "metro-source-map": "0.81.5",
+    "metro-symbolicate": "0.81.5",
+    "metro-transform-plugins": "0.81.5",
+    "metro-transform-worker": "0.81.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "root": "https://sandbox.loop.co.ke/devportal/docs/loop-api",
+  "fetched": "2026-08-13",
+  "capture": "manual-transcription",
+  "capture_note": "The portal was unreachable from the build machine (egress policy). The maintainer supplied the rendered page text and it was transcribed. Content is LOOP's; the transcription is not machine-verified against the live pages. Deep-link URLs other than /introduction are inferred from the portal navigation. Re-run tools/crawl_loop.sh + tools/ingest_docs.py from a machine that can reach the portal to replace this with a crawler-generated corpus.",
+  "verified": [
+    "All four published HMAC-SHA256 test vectors were recomputed and reproduce exactly, confirming the canonical string is merchantTill|timestamp|nonce with lowercase-hex output."
+  ],
+  "page_count": 17,
+  "pages": [
+    { "slug": "api-flows", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "What the APIs actually do — flow by flow" },
+    { "slug": "security-testing", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Security self-testing in the LOOP sandbox" },
+    { "slug": "introduction", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/introduction", "title": "Introduction" },
+    { "slug": "overview", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/overview", "title": "LOOP API Overview" },
+    { "slug": "authorisation", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/authorisation", "title": "Authorisation" },
+    { "slug": "signing", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Request signing (HMAC-SHA256)" },
+    { "slug": "conventions", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Request/response conventions" },
+    { "slug": "loop-prompt", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/loop-prompt", "title": "LOOP Prompt (request to pay)" },
+    { "slug": "transaction-status-inquiry", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/transaction-status-inquiry", "title": "Transaction Status Inquiry" },
+    { "slug": "pay-to-loop-till", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/pay-to-loop-till", "title": "Pay to LOOP Till" },
+    { "slug": "pay-to-mpesa-till", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/pay-to-m-pesa-till", "title": "Pay to M-Pesa Till" },
+    { "slug": "pay-to-mpesa-paybill", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/pay-to-m-pesa-paybill", "title": "Pay to M-Pesa Paybill" },
+    { "slug": "send-money-loop", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/send-money-loop", "title": "Send Money — LOOP" },
+    { "slug": "send-money-mpesa", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/send-money-m-pesa", "title": "Send Money — M-Pesa" },
+    { "slug": "send-money-pesalink", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/send-money-pesalink", "title": "Send Money — PesaLink" },
+    { "slug": "doc-conflicts", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Known documentation conflicts" },
+    { "slug": "coverage", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Coverage and gaps" }
+  ],
+  "not_captured": [
+    { "title": "Transaction History", "reason": "page exists in portal navigation; content not supplied" },
+    { "title": "LOOP M-Pesa Prompt", "reason": "page exists in portal navigation; content not supplied" }
+  ]
+}
