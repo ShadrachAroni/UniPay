@@ -1,0 +1,98 @@
+[
+  {
+    "id": "trx_1001",
+    "recipient_profile_id": "prf_001",
+    "amount": 4500,
+    "currency": "KES",
+    "provider_fee": 67.5,
+    "net_amount": 4432.5,
+    "payment_status": "completed",
+    "settlement_status": "settled",
+    "transaction_time": "2026-08-13T08:12:00Z",
+    "settled_at": "2026-08-13T18:00:00Z"
+  },
+  {
+    "id": "trx_1002",
+    "recipient_profile_id": "prf_001",
+    "amount": 1200,
+    "currency": "KES",
+    "provider_fee": 18,
+    "net_amount": 1182,
+    "payment_status": "completed",
+    "settlement_status": "in_transit",
+    "transaction_time": "2026-08-13T10:45:00Z",
+    "settled_at": null
+  },
+  {
+    "id": "trx_1003",
+    "recipient_profile_id": "prf_001",
+    "amount": 25000,
+    "currency": "KES",
+    "provider_fee": 375,
+    "net_amount": 24625,
+    "payment_status": "processing",
+    "settlement_status": "unsettled",
+    "transaction_time": "2026-08-13T11:20:00Z",
+    "settled_at": null
+  },
+  {
+    "id": "trx_1004",
+    "recipient_profile_id": "prf_001",
+    "amount": 800,
+    "currency": "KES",
+    "provider_fee": 12,
+    "net_amount": 788,
+    "payment_status": "failed",
+    "settlement_status": "failed",
+    "transaction_time": "2026-08-12T16:05:00Z",
+    "settled_at": null
+  },
+  {
+    "id": "trx_1005",
+    "recipient_profile_id": "prf_001",
+    "amount": 15750,
+    "currency": "KES",
+    "provider_fee": 236.25,
+    "net_amount": 15513.75,
+    "payment_status": "completed",
+    "settlement_status": "settled",
+    "transaction_time": "2026-08-12T09:31:00Z",
+    "settled_at": "2026-08-12T18:00:00Z"
+  },
+  {
+    "id": "trx_1006",
+    "recipient_profile_id": "prf_003",
+    "amount": 3000,
+    "currency": "KES",
+    "provider_fee": 45,
+    "net_amount": 2955,
+    "payment_status": "pending",
+    "settlement_status": "unsettled",
+    "transaction_time": "2026-08-13T12:02:00Z",
+    "settled_at": null
+  },
+  {
+    "id": "trx_1007",
+    "recipient_profile_id": "prf_004",
+    "amount": 500,
+    "currency": "KES",
+    "provider_fee": 7.5,
+    "net_amount": 492.5,
+    "payment_status": "completed",
+    "settlement_status": "settled",
+    "transaction_time": "2026-08-11T14:22:00Z",
+    "settled_at": "2026-08-11T18:00:00Z"
+  },
+  {
+    "id": "trx_1008",
+    "recipient_profile_id": "prf_001",
+    "amount": 9800,
+    "currency": "KES",
+    "provider_fee": 147,
+    "net_amount": 9653,
+    "payment_status": "completed",
+    "settlement_status": "unsettled",
+    "transaction_time": "2026-08-10T07:55:00Z",
+    "settled_at": null
+  }
+]

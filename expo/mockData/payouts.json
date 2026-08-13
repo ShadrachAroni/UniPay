@@ -1,0 +1,7 @@
+[
+  { "id": "pay_001", "profile_id": "prf_001", "requested_amount": 20000, "destination_reference": "LOOP •••• 4412", "status": "completed", "requested_at": "2026-08-12T09:00:00Z" },
+  { "id": "pay_002", "profile_id": "prf_001", "requested_amount": 8500, "destination_reference": "LOOP •••• 4412", "status": "processing", "requested_at": "2026-08-13T07:40:00Z" },
+  { "id": "pay_003", "profile_id": "prf_003", "requested_amount": 46000, "destination_reference": "LOOP •••• 7781", "status": "disputed", "requested_at": "2026-08-11T15:10:00Z" },
+  { "id": "pay_004", "profile_id": "prf_004", "requested_amount": 1200, "destination_reference": "LOOP •••• 9034", "status": "failed", "requested_at": "2026-08-10T11:25:00Z" },
+  { "id": "pay_005", "profile_id": "prf_005", "requested_amount": 30000, "destination_reference": "LOOP •••• 2210", "status": "requested", "requested_at": "2026-08-13T13:55:00Z" }
+]

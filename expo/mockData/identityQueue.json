@@ -1,0 +1,26 @@
+[
+  {
+    "profile_id": "prf_002",
+    "display_name": "Brian Otieno",
+    "account_type": "individual",
+    "submitted_at": "2026-08-13T08:14:00Z",
+    "id_document_url": "https://files.unipay.test/id/prf_002.jpg",
+    "ai_precheck": { "confidence": 0.91, "verdict": "likely_valid", "notes": "Face match 0.94, document edges intact, MRZ readable." }
+  },
+  {
+    "profile_id": "prf_003",
+    "display_name": "Kilimani Fitness Hub",
+    "account_type": "business",
+    "submitted_at": "2026-08-13T09:47:00Z",
+    "id_document_url": "https://files.unipay.test/id/prf_003.jpg",
+    "ai_precheck": { "confidence": 0.48, "verdict": "needs_review", "notes": "Business certificate number could not be read; glare on lower third." }
+  },
+  {
+    "profile_id": "prf_005",
+    "display_name": "Westlands Auto Spares",
+    "account_type": "business",
+    "submitted_at": "2026-08-12T17:03:00Z",
+    "id_document_url": "https://files.unipay.test/id/prf_005.jpg",
+    "ai_precheck": null
+  }
+]
