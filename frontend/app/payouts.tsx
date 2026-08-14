@@ -9,6 +9,8 @@ import { Building2, Plus, Clock, CheckCircle2, AlertCircle } from 'lucide-react-
 import { Chip } from '../components/Chip';
 import { BottomSheet } from '../components/BottomSheet';
 import { BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { DateRangePicker } from '../components/DateRangePicker';
+import { DateRange, getPresetRange } from '../utils/dateUtils';
 
 // Payouts Screen implementation
 export default function PayoutsScreen() {
@@ -18,6 +20,7 @@ export default function PayoutsScreen() {
 
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
   
   // New Payout form state
   const [amount, setAmount] = useState('');
@@ -106,6 +109,36 @@ export default function PayoutsScreen() {
     );
   };
 
+  const filteredPayouts = React.useMemo(() => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      return payouts;
+    }
+
+    const startMs = new Date(
+      dateRange.startDate.getFullYear(),
+      dateRange.startDate.getMonth(),
+      dateRange.startDate.getDate(),
+      0,
+      0,
+      0,
+      0,
+    ).getTime();
+    const endMs = new Date(
+      dateRange.endDate.getFullYear(),
+      dateRange.endDate.getMonth(),
+      dateRange.endDate.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+
+    return payouts.filter((p) => {
+      const requestedAtMs = new Date(p.requested_at).getTime();
+      return requestedAtMs >= startMs && requestedAtMs <= endMs;
+    });
+  }, [dateRange, payouts]);
+
   return (
     <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
       <Header 
@@ -117,8 +150,16 @@ export default function PayoutsScreen() {
         }
       />
 
+      <View className="px-4 pb-2">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
+        />
+      </View>
+
       <FlatList
-        data={payouts}
+        data={filteredPayouts}
         keyExtractor={item => item.id}
         renderItem={renderItem}
         contentContainerStyle={{ padding: tokens.spacing.lg }}

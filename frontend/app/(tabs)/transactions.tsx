@@ -12,6 +12,8 @@ import { Transaction } from '../../api/types';
 import { useToast } from '../../components/Toast';
 import { SearchBar } from '../../components/SearchBar';
 import { StatusBadge } from '../../components/StatusBadge';
+import { DateRangePicker } from '../../components/DateRangePicker';
+import { DateRange, getPresetRange } from '../../utils/dateUtils';
 
 export default function TransactionsScreen() {
   const { tokens, isDark } = useTheme();
@@ -22,6 +24,7 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
   
   // Bottom Sheet Refs
   const filterMenuRef = useRef<BottomSheetModal>(null);
@@ -68,6 +71,32 @@ export default function TransactionsScreen() {
       filtered = filtered.filter(t => selectedFilters['status'].includes(t.payment_status));
     }
 
+    if (dateRange.startDate && dateRange.endDate) {
+      const startMs = new Date(
+        dateRange.startDate.getFullYear(),
+        dateRange.startDate.getMonth(),
+        dateRange.startDate.getDate(),
+        0,
+        0,
+        0,
+        0,
+      ).getTime();
+      const endMs = new Date(
+        dateRange.endDate.getFullYear(),
+        dateRange.endDate.getMonth(),
+        dateRange.endDate.getDate(),
+        23,
+        59,
+        59,
+        999,
+      ).getTime();
+
+      filtered = filtered.filter((t) => {
+        const txMs = new Date(t.transaction_time).getTime();
+        return txMs >= startMs && txMs <= endMs;
+      });
+    }
+
     // 2. Group by date string
     const groups: Record<string, Transaction[]> = {};
     filtered.forEach(tx => {
@@ -80,7 +109,7 @@ export default function TransactionsScreen() {
       title: date,
       data: groups[date].sort((a, b) => new Date(b.transaction_time).getTime() - new Date(a.transaction_time).getTime())
     }));
-  }, [transactions, searchQuery, selectedFilters]);
+  }, [transactions, searchQuery, selectedFilters, dateRange]);
 
   // Filter Config
   const filterGroups: FilterGroup[] = [
@@ -206,6 +235,14 @@ export default function TransactionsScreen() {
         <SearchBar 
           placeholder="Search transactions..." 
           onChangeText={setSearchQuery} 
+        />
+      </View>
+
+      <View className="px-4 pb-2">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
         />
       </View>
 

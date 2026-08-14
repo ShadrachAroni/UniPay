@@ -8,8 +8,10 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchBar } from '../../components/ui/SearchBar';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
 import { Profile } from '@unipay/shared';
+import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
   Shield,
   X,
@@ -32,6 +34,7 @@ export default function AdminUsersScreen() {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [reviewerNote, setReviewerNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -41,6 +44,10 @@ export default function AdminUsersScreen() {
       let url = `${apiUrl}/api/v1/admin/users?limit=50`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (statusFilter !== 'all') url += `&verification_status=${statusFilter}`;
+      if (dateRange.startDate && dateRange.endDate) {
+        const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
+        url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+      }
 
       const res = await fetch(url, {
         headers: { Authorization: 'Bearer admin_super_demo' },
@@ -111,7 +118,7 @@ export default function AdminUsersScreen() {
 
   useEffect(() => {
     fetchUsers();
-  }, [statusFilter]);
+  }, [statusFilter, dateRange]);
 
   const handleReviewAction = async (decision: 'approved' | 'rejected' | 'suspended') => {
     if (!selectedUser) return;
@@ -187,6 +194,14 @@ export default function AdminUsersScreen() {
             />
           ))}
         </View>
+      </View>
+
+      <View className="mb-6">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
+        />
       </View>
 
       {/* Users Table */}

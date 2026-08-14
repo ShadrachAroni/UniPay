@@ -6,7 +6,9 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { AdminPlatformMetrics } from '@unipay/shared';
+import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
   CreditCard,
   CheckCircle2,
@@ -26,12 +28,19 @@ export default function AdminOverviewScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [metrics, setMetrics] = useState<AdminPlatformMetrics | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/admin/metrics`, {
+      let url = `${apiUrl}/api/v1/admin/metrics`;
+      if (dateRange.startDate && dateRange.endDate) {
+        const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
+        url += `?from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+      }
+
+      const res = await fetch(url, {
         headers: { Authorization: 'Bearer admin_super_demo' },
       });
       if (res.ok) {
@@ -118,7 +127,7 @@ export default function AdminOverviewScreen() {
 
   useEffect(() => {
     fetchMetrics();
-  }, []);
+  }, [dateRange]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -153,6 +162,14 @@ export default function AdminOverviewScreen() {
       </View>
 
       {/* KPI Summary Cards Grid */}
+      <View className="mb-6">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="KPI Date Range"
+        />
+      </View>
+
       <View className="flex-row flex-wrap gap-4 mb-8">
         <Card style={{ flex: 1, minWidth: 220 }}>
           <View className="flex-row items-center justify-between mb-2">

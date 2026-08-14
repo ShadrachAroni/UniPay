@@ -6,7 +6,9 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { SearchBar } from '../../components/ui/SearchBar';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { AuditLog } from '@unipay/shared';
+import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
   ShieldCheck,
   RefreshCw,
@@ -23,6 +25,7 @@ export default function AdminAuditScreen() {
   const [actionFilter, setActionFilter] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -31,6 +34,10 @@ export default function AdminAuditScreen() {
     try {
       let url = `${apiUrl}/api/v1/admin/audit-logs?limit=50`;
       if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
+      if (dateRange.startDate && dateRange.endDate) {
+        const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
+        url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+      }
 
       const res = await fetch(url, {
         headers: { Authorization: 'Bearer admin_super_demo' },
@@ -85,7 +92,7 @@ export default function AdminAuditScreen() {
 
   useEffect(() => {
     fetchAuditLogs();
-  }, []);
+  }, [dateRange]);
 
   return (
     <ScrollView
@@ -116,6 +123,14 @@ export default function AdminAuditScreen() {
             }}
           />
         </View>
+      </View>
+
+      <View className="mb-6">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
+        />
       </View>
 
       <Card style={{ padding: 0 }}>

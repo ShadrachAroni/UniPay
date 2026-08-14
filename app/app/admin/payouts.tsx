@@ -5,8 +5,10 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
 import { Payout, Dispute } from '@unipay/shared';
+import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
   CreditCard,
   AlertTriangle,
@@ -24,6 +26,7 @@ export default function AdminPayoutsScreen() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
   const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
   const [payoutModalVisible, setPayoutModalVisible] = useState(false);
@@ -39,8 +42,16 @@ export default function AdminPayoutsScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const utcRange = dateRange.startDate && dateRange.endDate
+        ? toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours())
+        : null;
+
       if (activeTab === 'payouts') {
-        const res = await fetch(`${apiUrl}/api/v1/admin/payouts?limit=50`, {
+        let url = `${apiUrl}/api/v1/admin/payouts?limit=50`;
+        if (utcRange) {
+          url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+        }
+        const res = await fetch(url, {
           headers: { Authorization: 'Bearer admin_super_demo' },
         });
         if (res.ok) {
@@ -48,7 +59,11 @@ export default function AdminPayoutsScreen() {
           setPayouts(data.payouts || []);
         }
       } else {
-        const res = await fetch(`${apiUrl}/api/v1/admin/disputes?limit=50`, {
+        let url = `${apiUrl}/api/v1/admin/disputes?limit=50`;
+        if (utcRange) {
+          url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+        }
+        const res = await fetch(url, {
           headers: { Authorization: 'Bearer admin_super_demo' },
         });
         if (res.ok) {
@@ -96,7 +111,7 @@ export default function AdminPayoutsScreen() {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, dateRange]);
 
   const handlePayoutIntervention = async (action: 'retry' | 'cancel') => {
     if (!selectedPayout) return;
@@ -181,6 +196,14 @@ export default function AdminPayoutsScreen() {
           label="Dispute Cases Queue"
           selected={activeTab === 'disputes'}
           onPress={() => setActiveTab('disputes')}
+        />
+      </View>
+
+      <View className="mb-6">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
         />
       </View>
 

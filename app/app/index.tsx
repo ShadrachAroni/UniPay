@@ -345,7 +345,7 @@ export default function IndexScreen() {
   const handleRunAiQuery = async (customQuery?: string) => {
     const q = customQuery || aiQuery;
     if (!q.trim()) {
-      showToast('Please enter a query for the AI Assistant', 'warning');
+      showToast('Please enter a query for the AI Assistant', 'info');
       return;
     }
     setAiLoading(true);
@@ -394,7 +394,7 @@ export default function IndexScreen() {
     if (!profile) return;
     const amountNum = parseFloat(payoutAmount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      showToast('Please enter a valid payout amount', 'warning');
+      showToast('Please enter a valid payout amount', 'info');
       return;
     }
 
@@ -443,7 +443,7 @@ export default function IndexScreen() {
         destination_reference: newRuleDestType === 'mpesa' ? phone : 'ACC-PRIMARY',
         allocation_type: newRuleAllocationType,
         allocation_value: newRuleAllocationType === 'full' ? 100 : parseFloat(newRuleValue) || 20,
-        priority: rules.length + 1,
+        priority_order: rules.length + 1,
         is_active: true,
       };
 
@@ -1223,7 +1223,7 @@ export default function IndexScreen() {
                         Rule #{index + 1}: Auto-route {r.allocation_value}% to {r.destination_type.toUpperCase()}
                       </Text>
                       <Text style={{ color: activeColors.text.muted, fontSize: 11, marginTop: 2 }}>
-                        Target: {r.destination_reference || 'Default Account'} · Priority: {r.priority}
+                        Target: {r.destination_reference || 'Default Account'} · Priority: {r.priority_order}
                       </Text>
                     </View>
                     <Chip label="Active" variant="success" size="sm" />
@@ -1397,4 +1397,3 @@ export default function IndexScreen() {
     </ScrollView>
   );
 }
-

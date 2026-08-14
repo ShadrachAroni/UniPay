@@ -5,8 +5,10 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
 import { ReconciliationException } from '@unipay/shared';
+import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -26,6 +28,7 @@ export default function AdminExceptionsScreen() {
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [actionNotes, setActionNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -34,6 +37,10 @@ export default function AdminExceptionsScreen() {
     try {
       let url = `${apiUrl}/api/v1/admin/exceptions?limit=50`;
       if (categoryFilter !== 'all') url += `&category=${categoryFilter}`;
+      if (dateRange.startDate && dateRange.endDate) {
+        const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
+        url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
+      }
 
       const res = await fetch(url, {
         headers: { Authorization: 'Bearer admin_super_demo' },
@@ -85,7 +92,7 @@ export default function AdminExceptionsScreen() {
 
   useEffect(() => {
     fetchExceptions();
-  }, [categoryFilter]);
+  }, [categoryFilter, dateRange]);
 
   const handleAction = async (action: 'resolve' | 'escalate') => {
     if (!selectedException) return;
@@ -154,6 +161,14 @@ export default function AdminExceptionsScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <View className="mb-6">
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          label="Date Range"
+        />
+      </View>
 
       {/* Exceptions Table */}
       <Card style={{ padding: 0 }}>
