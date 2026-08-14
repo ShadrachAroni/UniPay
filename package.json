@@ -55,7 +55,8 @@
     "metro-transform-worker": "0.81.5"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "yaml": "^2.9.0"
   },
   "optionalDependencies": {
     "lightningcss-darwin-arm64": "1.27.0",
