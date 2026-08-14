@@ -32,10 +32,14 @@ const tokenCache = {
   },
 };
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const publishableKey =
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  'pk_test_d2lsbGluZy1mbG91bmRlci0yMS5jbGVyay5hY2NvdW50cy5kZXYk';
 
-if (!publishableKey) {
-  throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable.');
+if (!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  console.warn(
+    '[UniPay App] Warning: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY is missing. Using fallback demo key.'
+  );
 }
 
 function NavigationStack() {

@@ -142,20 +142,30 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  sheetLight: {
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 16,
-    elevation: 18,
-  },
-  sheetDark: {
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 18,
-    elevation: 22,
-  },
+  sheetLight: Platform.select({
+    web: {
+      boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.18)',
+    },
+    default: {
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowOffset: { width: 0, height: 8 },
+      shadowRadius: 16,
+      elevation: 18,
+    },
+  }) as any,
+  sheetDark: Platform.select({
+    web: {
+      boxShadow: '0px 10px 18px rgba(0, 0, 0, 0.4)',
+    },
+    default: {
+      shadowColor: '#000',
+      shadowOpacity: 0.4,
+      shadowOffset: { width: 0, height: 10 },
+      shadowRadius: 18,
+      elevation: 22,
+    },
+  }) as any,
   handle: {
     width: 36,
     height: 4,

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp, Platform } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 
 export interface CardProps {
@@ -25,11 +25,18 @@ export function Card({ children, style, variant = 'default', className }: CardPr
         return {
           backgroundColor: activeColors.surface,
           borderColor: activeColors.brand,
-          shadowColor: activeColors.brand,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.25 : 0.15,
-          shadowRadius: 16,
-          elevation: 6,
+          ...Platform.select({
+            web: {
+              boxShadow: `0px 4px 16px ${isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(37, 99, 235, 0.15)'}`,
+            },
+            default: {
+              shadowColor: activeColors.brand,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.25 : 0.15,
+              shadowRadius: 16,
+              elevation: 6,
+            },
+          }),
         };
       case 'outline':
         return {
