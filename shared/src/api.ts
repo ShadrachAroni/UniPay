@@ -286,3 +286,105 @@ export interface CreatePoolRequest {
   currency: 'KES';
   deadline?: string;
 }
+
+// -------------------------------------------------------------
+// Phase 8 Admin API Contracts (§16, §18, §19)
+// -------------------------------------------------------------
+
+import {
+  AdminRole,
+  AdminUser,
+  AuditLog,
+  Dispute,
+  AdminPlatformMetrics,
+  RailHealthIndicator,
+} from './models';
+
+export interface AdminUsersListResponse {
+  users: Array<Profile & { aliases?: Alias[] }>;
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminUserDetailResponse {
+  profile: Profile;
+  aliases: Alias[];
+  transactions: Transaction[];
+  payouts: Payout[];
+}
+
+export interface AdminIdentityReviewRequest {
+  decision: 'approved' | 'rejected' | 'suspended';
+  reviewer_note?: string;
+}
+
+export interface AdminTransactionsListResponse {
+  transactions: Transaction[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminExceptionsListResponse {
+  exceptions: ReconciliationException[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminExceptionActionRequest {
+  action: 'resolve' | 'escalate';
+  notes?: string;
+}
+
+export interface AdminPaymentRailsListResponse {
+  rails: Array<{
+    id: string;
+    name: string;
+    adapter_key: string;
+    is_enabled: boolean;
+    supported_currencies: string[];
+    supported_countries: string[];
+    min_amount: number;
+    max_amount: number;
+    capabilities_json: Record<string, unknown>;
+    health?: RailHealthIndicator;
+  }>;
+}
+
+export interface AdminUpdateRailRequest {
+  is_enabled?: boolean;
+  min_amount?: number;
+  max_amount?: number;
+  fee_fixed?: number;
+  fee_percentage?: number;
+}
+
+export interface AdminPayoutInterventionRequest {
+  action: 'retry' | 'cancel';
+  reason: string;
+}
+
+export interface AdminDisputesListResponse {
+  disputes: Dispute[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminResolveDisputeRequest {
+  decision: 'resolved_refund' | 'resolved_rejected';
+  resolution_notes?: string;
+}
+
+export interface AdminAuditLogsResponse {
+  audit_logs: AuditLog[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminMetricsResponse {
+  metrics: AdminPlatformMetrics;
+}

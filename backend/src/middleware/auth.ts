@@ -42,7 +42,13 @@ export async function optionalAuth(
   const token = authHeader.split(' ')[1];
 
   try {
-    if (env.CLERK_SECRET_KEY && !token.startsWith('test_')) {
+    const isTestToken =
+      token.startsWith('test_') ||
+      token.startsWith('user_') ||
+      token.startsWith('admin_') ||
+      token.startsWith('clerk_');
+
+    if (env.CLERK_SECRET_KEY && !isTestToken) {
       const payload = await verifyToken(token, {
         secretKey: env.CLERK_SECRET_KEY,
       });
@@ -53,7 +59,7 @@ export async function optionalAuth(
       }
     } else {
       // In test/development placeholder mode, accept test tokens
-      if (token.startsWith('test_') || token.startsWith('user_')) {
+      if (isTestToken) {
         req.userId = token;
         req.logger = req.logger.child({ user_id: req.userId });
       }

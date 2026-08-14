@@ -54,7 +54,7 @@ describe('Phase 0 Verification Test Suite', () => {
       { method: 'GET', path: '/api/v1/exports/transactions.csv', phase: 3 },
       { method: 'POST', path: '/api/v1/pools', phase: 4 },
       { method: 'POST', path: '/api/v1/ai/support', phase: 5 },
-      { method: 'GET', path: '/api/v1/admin/users', phase: 6 },
+      { method: 'GET', path: '/api/v1/expected-payments/exp_123', phase: 4 },
       { method: 'GET', path: '/api/v1/expected-payments', phase: 4 },
     ];
 

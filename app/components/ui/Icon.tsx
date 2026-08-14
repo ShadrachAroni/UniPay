@@ -18,7 +18,13 @@ export type IconName =
   | 'dollar-sign'
   | 'help-circle'
   | 'check'
-  | 'x';
+  | 'x'
+  | 'zap'
+  | 'shield'
+  | 'alert'
+  | 'activity'
+  | 'layers'
+  | 'file-text';
 
 export interface IconProps {
   name: IconName;
@@ -34,6 +40,7 @@ export function Icon({ name, size = 20, color = '#F8FAFC', style }: IconProps) {
     case 'check-circle':
       return <Feather name="check-circle" size={size} color={color} style={style} />;
     case 'alert-circle':
+    case 'alert':
       return <Feather name="alert-circle" size={size} color={color} style={style} />;
     case 'clock':
       return <Feather name="clock" size={size} color={color} style={style} />;
@@ -61,6 +68,16 @@ export function Icon({ name, size = 20, color = '#F8FAFC', style }: IconProps) {
       return <Feather name="check" size={size} color={color} style={style} />;
     case 'x':
       return <Feather name="x" size={size} color={color} style={style} />;
+    case 'zap':
+      return <Feather name="zap" size={size} color={color} style={style} />;
+    case 'shield':
+      return <Feather name="shield" size={size} color={color} style={style} />;
+    case 'activity':
+      return <Feather name="activity" size={size} color={color} style={style} />;
+    case 'layers':
+      return <Feather name="layers" size={size} color={color} style={style} />;
+    case 'file-text':
+      return <Feather name="file-text" size={size} color={color} style={style} />;
     default:
       return <Feather name="help-circle" size={size} color={color} style={style} />;
   }

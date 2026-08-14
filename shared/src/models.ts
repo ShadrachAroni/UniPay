@@ -341,3 +341,74 @@ export interface AIService {
   predictSettlementDelay(tx: NormalizedTransaction): Promise<DelayForecast>;
 }
 
+// -------------------------------------------------------------
+// 8. Admin Module Domain Models (§11, §16, §19)
+// -------------------------------------------------------------
+
+export type AdminRole = 'super_admin' | 'support' | 'compliance_reviewer';
+
+export interface AdminUser {
+  id: string;
+  clerk_user_id: string;
+  role: AdminRole;
+  permissions_json: Record<string, boolean>;
+  created_at: string;
+}
+
+export type AuditLogActorType = 'admin' | 'system' | 'user';
+
+export interface AuditLog {
+  id: string;
+  actor_type: AuditLogActorType;
+  actor_id: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  before_state?: Record<string, unknown> | null;
+  after_state?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export type DisputeStatus =
+  | 'open'
+  | 'under_review'
+  | 'resolved_refund'
+  | 'resolved_rejected';
+
+export interface Dispute {
+  id: string;
+  transaction_id?: string | null;
+  profile_id: string;
+  reason: string;
+  amount: number;
+  currency: string;
+  status: DisputeStatus;
+  resolution_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RailHealthIndicator {
+  adapter_key: string;
+  name: string;
+  is_enabled: boolean;
+  circuit_breaker_state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  failure_count: number;
+  total_requests: number;
+  failed_requests: number;
+  error_rate: number;
+  last_success_at?: string | null;
+}
+
+export interface AdminPlatformMetrics {
+  total_volume: number;
+  total_transactions: number;
+  reconciliation_rate: number;
+  exception_rate: number;
+  ai_suggestion_acceptance_rate: number;
+  total_users: number;
+  pending_kyc_count: number;
+  open_exceptions_count: number;
+  open_disputes_count: number;
+  rails_health: RailHealthIndicator[];
+}

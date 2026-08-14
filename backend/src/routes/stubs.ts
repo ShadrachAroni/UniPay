@@ -36,11 +36,8 @@ stubsRouter.get('/exports/transactions.csv', createStubHandler(3, 'Export transa
 // /ai/query is live in ai.ts
 stubsRouter.post('/ai/support', createStubHandler(5, 'AI conversational customer support assistant'));
 
-// Phase 6: Admin Operations
-stubsRouter.get('/admin/users', createStubHandler(6, 'Admin list all users and verification statuses'));
-stubsRouter.get('/admin/exceptions', createStubHandler(6, 'Admin system-wide reconciliation exceptions'));
-stubsRouter.put('/admin/payment-rails/:id', createStubHandler(6, 'Admin update payment rail circuit breaker state'));
-stubsRouter.get('/admin/audit-logs', createStubHandler(6, 'Admin security audit log search'));
+// Phase 6 / Phase 8: Admin Operations
+// Live in admin.ts (/api/v1/admin/*)
 
 // Phase 7: Checkout
 // POST /checkout/payment-options is live in checkout.ts

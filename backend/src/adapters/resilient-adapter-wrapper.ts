@@ -22,6 +22,9 @@ export class ResilientAdapterWrapper implements PaymentProviderAdapter {
   private readonly adapter: PaymentProviderAdapter;
   private readonly breaker: CircuitBreaker;
   private readonly retryOptions: RetryOptions;
+  private totalRequests = 0;
+  private failedRequests = 0;
+  private lastSuccessAt: string | null = null;
 
   constructor(adapter: PaymentProviderAdapter, options: ResilientWrapperOptions = {}) {
     this.adapter = adapter;
@@ -45,28 +48,46 @@ export class ResilientAdapterWrapper implements PaymentProviderAdapter {
     return this.adapter;
   }
 
+  getHealthStats() {
+    const breakerState = this.breaker.getState();
+    const failureCount = this.breaker.getFailureCount();
+    const errorRate = this.totalRequests > 0 ? this.failedRequests / this.totalRequests : 0;
+    return {
+      circuitBreakerState: breakerState,
+      failureCount,
+      totalRequests: this.totalRequests,
+      failedRequests: this.failedRequests,
+      errorRate,
+      lastSuccessAt: this.lastSuccessAt,
+    };
+  }
+
+  private async trackExecution<T>(fn: () => Promise<T>): Promise<T> {
+    this.totalRequests++;
+    try {
+      const res = await this.breaker.execute(() => retryWithJitter(fn, this.retryOptions));
+      this.lastSuccessAt = new Date().toISOString();
+      return res;
+    } catch (err) {
+      this.failedRequests++;
+      throw err;
+    }
+  }
+
   async createPayment(request: PaymentRequest): Promise<ProviderPaymentResult> {
-    return this.breaker.execute(() =>
-      retryWithJitter(() => this.adapter.createPayment(request), this.retryOptions)
-    );
+    return this.trackExecution(() => this.adapter.createPayment(request));
   }
 
   async getStatus(providerReference: string): Promise<ProviderStatusResult> {
-    return this.breaker.execute(() =>
-      retryWithJitter(() => this.adapter.getStatus(providerReference), this.retryOptions)
-    );
+    return this.trackExecution(() => this.adapter.getStatus(providerReference));
   }
 
   async refund(request: RefundRequest): Promise<ProviderRefundResult> {
-    return this.breaker.execute(() =>
-      retryWithJitter(() => this.adapter.refund(request), this.retryOptions)
-    );
+    return this.trackExecution(() => this.adapter.refund(request));
   }
 
   async disburse(request: DisbursementRequest): Promise<ProviderPayoutResult> {
-    return this.breaker.execute(() =>
-      retryWithJitter(() => this.adapter.disburse(request), this.retryOptions)
-    );
+    return this.trackExecution(() => this.adapter.disburse(request));
   }
 
   normalize(payload: unknown): NormalizedTransaction {
@@ -77,3 +98,4 @@ export class ResilientAdapterWrapper implements PaymentProviderAdapter {
     return this.adapter.verifyWebhook(req);
   }
 }
+

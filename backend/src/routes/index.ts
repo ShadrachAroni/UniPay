@@ -8,6 +8,7 @@ import { webhooksRouter } from './webhooks';
 import { reconciliationRouter } from './reconciliation';
 import { aiRouter } from './ai';
 import { payoutsRouter } from './payouts';
+import { adminRouter } from './admin';
 import { stubsRouter } from './stubs';
 
 export const apiRouter = Router();
@@ -34,6 +35,9 @@ apiRouter.use('/api/v1/ai', aiRouter);
 
 // Phase 6 Live Endpoints: Payouts & Disbursements
 apiRouter.use('/api/v1/payouts', payoutsRouter);
+
+// Phase 8 Live Endpoints: Admin Operations, Audit Logs, Rail Control, Disputes
+apiRouter.use('/api/v1/admin', adminRouter);
 
 // §18 & Phase 4B API Endpoints stubs mounted at /api/v1
 apiRouter.use('/api/v1', stubsRouter);

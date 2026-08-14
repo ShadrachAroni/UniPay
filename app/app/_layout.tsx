@@ -69,6 +69,13 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="admin"
+            options={{
+              title: 'UniPay Admin Console',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
             name="(auth)/sign-in"
             options={{
               title: 'Sign In',
