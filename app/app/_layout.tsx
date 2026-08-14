@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stack } from 'expo-router';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';

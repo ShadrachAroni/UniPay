@@ -8,7 +8,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { Profile, Alias, AccountType, MoneyDirectionRule } from '@unipay/shared';
 import { useTheme } from '../theme/ThemeProvider';

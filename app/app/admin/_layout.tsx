@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/expo';
 import { useAdminApi } from '../../hooks/useAdminApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ThemeToggle } from '../../theme/ThemeToggle';

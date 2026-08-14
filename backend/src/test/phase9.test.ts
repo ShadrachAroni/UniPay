@@ -151,31 +151,28 @@ describe('Phase 9 Verification Test Suite — Hardening, Observability & Securit
         owner_name: 'AI Payer',
       });
 
-      let hit429 = false;
-      // Burst 15 queries on AI endpoint (limit is 10)
-      for (let i = 0; i < 15; i++) {
-        const res = await fetch(`${baseUrl}/api/v1/ai/query`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-profile-id': profile.id,
-          },
-          body: JSON.stringify({
-            query: `How much did I spend in KES on batch test ${i}?`,
-            profile_id: profile.id,
-          }),
-        });
+      // Burst 15 queries concurrently on AI endpoint (limit is 10)
+      const responses = await Promise.all(
+        Array.from({ length: 15 }, (_, i) =>
+          fetch(`${baseUrl}/api/v1/ai/query`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-profile-id': profile.id,
+            },
+            body: JSON.stringify({
+              query: `How much did I spend in KES on batch test ${i}?`,
+              profile_id: profile.id,
+            }),
+          })
+        )
+      );
 
-        if (res.status === 429) {
-          hit429 = true;
-          const body = (await res.json()) as any;
-          assert.strictEqual(body.error, 'Too Many Requests');
-          assert.ok(body.message.includes('AI query rate limit reached'));
-          break;
-        }
-      }
-
-      assert.strictEqual(hit429, true, 'Expected AI query rate limiter to engage');
+      const hit429Res = responses.find((r) => r.status === 429);
+      assert.ok(hit429Res, 'Expected AI query rate limiter to engage');
+      const body = (await hit429Res.json()) as any;
+      assert.strictEqual(body.error, 'Too Many Requests');
+      assert.ok(body.message.includes('AI query rate limit reached'));
     });
   });
 

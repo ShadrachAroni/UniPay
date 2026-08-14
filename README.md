@@ -9,7 +9,7 @@ UniPay provides individuals and businesses across Kenya with **one verifiable id
 | Layer | Technology | Details |
 | --- | --- | --- |
 | **Product Surface** | **Expo (React Native + TypeScript)**, Expo Router, NativeWind | One codebase, 3 export targets: **Web (zero-install guest checkout)**, iOS, Android. |
-| **Auth** | **Clerk** (`@clerk/clerk-expo` & backend JWT verification) | Universal auth for individuals and businesses (`account_type` is a flag, not a fork). |
+| **Auth** | **Clerk** (`@clerk/expo` & backend JWT verification) | Universal auth for individuals and businesses (`account_type` is a flag, not a fork). |
 | **Backend API** | **Node.js, Express, TypeScript** | Clean layered architecture, structured logging, API-first contract stubs. |
 | **Database** | **PostgreSQL via Supabase** | Connection pooling (transaction-mode compatible), schema evolution discipline. |
 | **Payment Rails** | **Provider-Adapter Interface** | Initial focus on **LOOP (NCBA)** with multi-rail extensibility (M-Pesa, PesaLink). |
