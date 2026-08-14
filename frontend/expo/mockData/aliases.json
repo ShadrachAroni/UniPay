@@ -1,7 +1,0 @@
-[
-  { "id": "als_001", "profile_id": "prf_001", "alias": "mamanjeri", "is_verified": true, "status": "active" },
-  { "id": "als_002", "profile_id": "prf_002", "alias": "brian.o", "is_verified": false, "status": "active" },
-  { "id": "als_003", "profile_id": "prf_003", "alias": "kilimanifit", "is_verified": true, "status": "active" },
-  { "id": "als_004", "profile_id": "prf_004", "alias": "faithm", "is_verified": true, "status": "active" },
-  { "id": "als_005", "profile_id": "prf_005", "alias": "westlandsauto", "is_verified": false, "status": "suspended" }
-]
