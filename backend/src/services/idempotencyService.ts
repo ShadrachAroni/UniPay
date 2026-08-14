@@ -64,6 +64,9 @@ export async function saveIdempotencyRecord(
     created_at: new Date().toISOString(),
   };
 
+  // Populate in-memory store immediately to prevent race conditions on rapid retries
+  inMemoryStore.set(key, record);
+
   try {
     await pool.query(
       `INSERT INTO idempotency_records 
@@ -77,8 +80,6 @@ export async function saveIdempotencyRecord(
       error: (err as Error).message,
     });
   }
-
-  inMemoryStore.set(key, record);
 }
 
 export function clearIdempotencyCache(): void {

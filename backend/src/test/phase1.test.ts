@@ -108,7 +108,7 @@ describe('Phase 1 Verification Test Suite — Identity, Auth & Data Model', () =
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          alias: '@amina',
+          alias: '@nonexistent_alias_public_checkout_test',
           amount: 500,
           currency: 'KES',
         }),
@@ -321,6 +321,7 @@ describe('Phase 1 Verification Test Suite — Identity, Auth & Data Model', () =
   describe('Idempotency Key Enforcement (Handbook M8.3)', () => {
     it('accepts and honors x-idempotency-key on write endpoints by returning cached response', async () => {
       const idempotencyKey = 'idemp_key_phase1_' + Date.now();
+      const testUserId = 'test_user_idemp_' + Date.now();
 
       const payload = {
         account_type: 'individual',
@@ -333,7 +334,7 @@ describe('Phase 1 Verification Test Suite — Identity, Auth & Data Model', () =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer test_user_idemp',
+          Authorization: `Bearer ${testUserId}`,
           'x-idempotency-key': idempotencyKey,
         },
         body: JSON.stringify(payload),
@@ -348,7 +349,7 @@ describe('Phase 1 Verification Test Suite — Identity, Auth & Data Model', () =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer test_user_idemp',
+          Authorization: `Bearer ${testUserId}`,
           'x-idempotency-key': idempotencyKey,
         },
         body: JSON.stringify(payload),
