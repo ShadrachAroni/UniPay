@@ -1,0 +1,40 @@
+
+Logs for your project will appear below. Press Ctrl+C to exit.
+λ Bundled 40251ms node_modules\expo-router\node\render.js (2742 modules)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100.0% (2719/2719)λ  WARN
+Clerk - DEPRECATION WARNING: @clerk/clerk-expo is deprecated.
+
+Please migrate to @clerk/expo.
+
+Migration guide: https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
+
+  console.warn (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:91:21)
+  Object.warnOnce (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\@clerk\shared\dist\runtime\logger-Dv_S1aDO.js:8:11)
+  factory (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\@clerk\clerk-expo\dist\index.js:39:22)
+  loadModuleImplementation (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:277:5)
+  guardedLoadModule (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:184:12)
+  require (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:92:7)
+  factory (C:\Projects\LOOPS API Hackathon\UniPay\app\app\(auth)\sign-in.tsx:3:1)
+  loadModuleImplementation (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:277:5)
+  guardedLoadModule (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:177:21)
+  metroRequire (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:92:7)
+λ  WARN  "shadow*" style props are deprecated. Use "boxShadow".
+  console.warn (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:91:21)
+  warnOnce (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  preprocess (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\react-native-web\dist\exports\StyleSheet\preprocess.js:113:13)
+  compileAndInsertAtomic (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\react-native-web\dist\exports\StyleSheet\index.js:56:34)
+  forEach (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\react-native-web\dist\exports\StyleSheet\index.js:99:26)
+  Function.create (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\react-native-web\dist\exports\StyleSheet\index.js:87:23)
+  factory (C:\Projects\LOOPS API Hackathon\UniPay\app\components\ui\BottomSheet.tsx:130:27)
+  loadModuleImplementation (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:277:5)
+  guardedLoadModule (C:\Projects\LOOPS API Hackathon\UniPay\node_modules\metro-runtime\src\polyfills\require.js:184:12)
+(node:13144) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Metro error: Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable.
+
+
+Call Stack
+  factory (app/_layout.tsx)
+  Object.get [as ./_layout.tsx] (app)
+  contextModule (app)
