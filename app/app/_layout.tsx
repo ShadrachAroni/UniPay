@@ -83,6 +83,54 @@ function NavigationStack() {
           }}
         />
         <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="transaction/[id]"
+          options={{
+            title: 'Transaction Details',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="payouts"
+          options={{
+            title: 'Payouts',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="money-direction"
+          options={{
+            title: 'Money Direction',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="pools"
+          options={{
+            title: 'Payment Pools',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="expected-payments"
+          options={{
+            title: 'Expected Payments',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="checkout"
+          options={{
+            title: 'Checkout',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="(auth)/sign-in"
           options={{
             title: 'Sign In',
