@@ -1,17 +1,19 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { View, Text, SectionList, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
+import { View, Text, SectionList, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Header } from '../../components/Header';
 import { FilterMenu, FilterGroup } from '../../components/FilterMenu';
 import { ActionMenu, ActionMenuItem } from '../../components/ActionMenu';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Filter, MoreVertical, Search } from 'lucide-react-native';
+import { Filter, MoreVertical } from 'lucide-react-native';
 import { getTransactions } from '../../api/transactions';
 import { Transaction } from '../../api/types';
 import { useToast } from '../../components/Toast';
 import { SearchBar } from '../../components/SearchBar';
-import { StatusBadge } from '../../components/StatusBadge';
+import { Chip } from '../../components/Chip';
+
+type TxQuickFilter = 'all' | 'paid' | 'pending' | 'review';
 
 export default function TransactionsScreen() {
   const { tokens, isDark } = useTheme();
@@ -22,6 +24,7 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<TxQuickFilter>('all');
   
   // Bottom Sheet Refs
   const filterMenuRef = useRef<BottomSheetModal>(null);
@@ -56,11 +59,27 @@ export default function TransactionsScreen() {
   const groupedData = useMemo(() => {
     // 1. Filter logic
     let filtered = transactions;
+
+    if (activeQuickFilter === 'paid') {
+      filtered = filtered.filter((t) => t.payment_status === 'completed');
+    }
+
+    if (activeQuickFilter === 'pending') {
+      filtered = filtered.filter((t) => t.payment_status === 'pending' || t.settlement_status === 'pending' || t.settlement_status === 'processing');
+    }
+
+    if (activeQuickFilter === 'review') {
+      filtered = filtered.filter((t) => t.payment_status === 'failed' || t.settlement_status === 'failed' || t.settlement_status === 'processing');
+    }
+
     if (searchQuery) {
-      // Simple mock search by amount or status
+      // Search by amount, status, currency, or id
       filtered = filtered.filter(t => 
         t.amount.toString().includes(searchQuery) || 
-        t.payment_status.toLowerCase().includes(searchQuery.toLowerCase())
+        t.payment_status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.currency.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.payer_reference || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -80,7 +99,14 @@ export default function TransactionsScreen() {
       title: date,
       data: groups[date].sort((a, b) => new Date(b.transaction_time).getTime() - new Date(a.transaction_time).getTime())
     }));
-  }, [transactions, searchQuery, selectedFilters]);
+  }, [transactions, searchQuery, selectedFilters, activeQuickFilter]);
+
+  const quickFilters: Array<{ id: TxQuickFilter; label: string }> = [
+    { id: 'all', label: 'All Transactions' },
+    { id: 'paid', label: 'Paid' },
+    { id: 'pending', label: 'Pending' },
+    { id: 'review', label: 'Needs Review' },
+  ];
 
   // Filter Config
   const filterGroups: FilterGroup[] = [
@@ -142,43 +168,79 @@ export default function TransactionsScreen() {
   ];
 
   const renderItem = ({ item }: { item: Transaction }) => {
+    // Status color mapping
+    const paymentStatusLabel = item.payment_status === 'completed'
+      ? 'Succeeded'
+      : item.payment_status === 'failed'
+        ? 'Failed'
+        : item.payment_status === 'refunded'
+          ? 'Refunded'
+          : 'Pending';
+
+    let paymentChipColor = tokens.colors.status.payment.pending;
+    if (item.payment_status === 'completed') paymentChipColor = tokens.colors.status.payment.success;
+    if (item.payment_status === 'failed') paymentChipColor = tokens.colors.semantic.error;
+    if (item.payment_status === 'refunded') paymentChipColor = activeColors.text.muted;
+
+    let settlementChipColor = tokens.colors.status.settlement.pending;
+    if (item.settlement_status === 'processing') settlementChipColor = tokens.colors.status.settlement.processing;
+    if (item.settlement_status === 'settled') settlementChipColor = tokens.colors.status.settlement.settled;
+    if (item.settlement_status === 'failed') settlementChipColor = tokens.colors.semantic.error;
+
+    const settlementStatusLabel = item.settlement_status.charAt(0).toUpperCase() + item.settlement_status.slice(1);
+
+    const payerName = item.payer_reference || 'Unknown Payer';
     return (
       <TouchableOpacity 
-        className="flex-row items-center justify-between py-3 border-b"
+        className="py-4 border-b"
         style={{ borderBottomColor: activeColors.border }}
         onPress={() => router.push(`/transaction/${item.id}`)}
       >
-        <View className="flex-row items-center flex-1">
-          <View 
-            className="w-10 h-10 rounded-full items-center justify-center mr-3"
-            style={{ backgroundColor: isDark ? tokens.colors.dark.surface : '#f1f5f9' }}
-          >
-            <Text style={{ fontSize: 16 }}>{item.currency === 'KES' ? 'KSh' : '$'}</Text>
-          </View>
-          <View>
-            <Text className="font-semibold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
-              Tx #{item.id.slice(0, 8)}
-            </Text>
-            
-            {/* Dual Status Badges: Payment & Settlement */}
-            <View className="flex-row gap-1 mt-1">
-              <StatusBadge type="payment" status={item.payment_status} />
-              <StatusBadge type="settlement" status={item.settlement_status} />
+        <View className="flex-row items-start justify-between">
+          <View className="flex-row items-start flex-1 pr-2">
+            <View 
+              className="w-10 h-10 rounded-full items-center justify-center mr-3"
+              style={{ backgroundColor: isDark ? tokens.colors.dark.surface : '#f1f5f9' }}
+            >
+              <Text style={{ fontSize: 16 }}>{item.currency === 'KES' ? 'KSh' : '$'}</Text>
+            </View>
+
+            <View className="flex-1">
+              <Text className="font-semibold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
+                {payerName}
+              </Text>
+              <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs, marginTop: 2 }}>
+                {item.id}
+              </Text>
+
+              <View className="flex-row flex-wrap mt-2" style={{ gap: tokens.spacing.sm }}>
+                <Chip
+                  label={`Payment: ${paymentStatusLabel}`}
+                  selected
+                  style={{ backgroundColor: paymentChipColor }}
+                />
+                <Chip
+                  label={`Settlement: ${settlementStatusLabel}`}
+                  selected
+                  style={{ backgroundColor: settlementChipColor }}
+                />
+              </View>
+
+              <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs, marginTop: tokens.spacing.sm }}>
+                {new Date(item.transaction_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
             </View>
           </View>
-        </View>
 
-        <View className="items-end justify-center mr-2">
-          <Text className="font-bold text-emerald-600 dark:text-emerald-400" style={{ fontSize: tokens.typography.size.base }}>
-            +{item.amount.toLocaleString()}
-          </Text>
-          <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs }}>
-            {item.currency}
-          </Text>
+          <View className="items-end justify-start mr-1">
+            <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
+              {item.currency} {item.amount.toLocaleString()}
+            </Text>
+          </View>
         </View>
 
         <TouchableOpacity 
-          className="p-2"
+          className="p-2 absolute right-0 top-2"
           onPress={() => {
             setSelectedTx(item);
             actionMenuRef.current?.present();
@@ -203,8 +265,40 @@ export default function TransactionsScreen() {
       />
 
       <View className="px-4 py-2 bg-transparent">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: tokens.spacing.sm }}
+        >
+          {quickFilters.map((filter) => {
+            const isActive = activeQuickFilter === filter.id;
+            return (
+              <TouchableOpacity
+                key={filter.id}
+                onPress={() => setActiveQuickFilter(filter.id)}
+                className="mr-2 px-4 py-2 rounded-full"
+                style={{
+                  backgroundColor: isActive ? activeColors.brand : activeColors.surface,
+                  borderWidth: 1,
+                  borderColor: isActive ? activeColors.brand : activeColors.border,
+                }}
+              >
+                <Text
+                  style={{
+                    color: isActive ? '#ffffff' : activeColors.text.secondary,
+                    fontSize: tokens.typography.size.sm,
+                    fontWeight: '600',
+                  }}
+                >
+                  {filter.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
         <SearchBar 
-          placeholder="Search transactions..." 
+          placeholder="Search by payer, amount, status, currency, or id..." 
           onChangeText={setSearchQuery} 
         />
       </View>

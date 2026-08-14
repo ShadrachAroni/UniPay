@@ -3,9 +3,12 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, TextInput, Ke
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../../theme/ThemeProvider';
 import { getDashboardStats } from '../../api/dashboard';
+import { getExpectedPayments } from '../../api/expectedPayments';
+import { getPaymentPools } from '../../api/pools';
+import { ExpectedPayment, PaymentPool } from '../../api/types';
 import { Avatar } from '../../components/Avatar';
 import { useAuth } from '../../components/AuthProvider';
-import { ArrowUpRight, ArrowDownLeft, Building2, Bell, Shield, QrCode, Lock, Share2, Copy, CheckCircle2 } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Building2, Bell, Shield, QrCode, Lock, Share2, Copy, CheckCircle2, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { BottomSheet } from '../../components/BottomSheet';
@@ -13,7 +16,13 @@ import { BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useToast } from '../../components/Toast';
 import { requestPayout } from '../../api/payouts';
 import { StatusBadge } from '../../components/StatusBadge';
-import { getExpectedPayments } from '../../api/expectedPayments';
+
+type DashboardStats = {
+  balance: number;
+  pending: number;
+  recentCount: number;
+  currency: string;
+};
 
 export default function DashboardScreen() {
   const { tokens, isDark } = useTheme();
@@ -24,8 +33,9 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { showToast } = useToast();
   
-  const [stats, setStats] = useState<any>(null);
-  const [expectedTotal, setExpectedTotal] = useState<number>(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [expectedPayments, setExpectedPayments] = useState<ExpectedPayment[]>([]);
+  const [pools, setPools] = useState<PaymentPool[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   // Modal Refs
@@ -55,8 +65,14 @@ export default function DashboardScreen() {
 
   const loadStats = async () => {
     try {
-      const data = await getDashboardStats();
-      setStats(data);
+      const [dashboardStats, expectedData, poolsData] = await Promise.all([
+        getDashboardStats() as Promise<DashboardStats>,
+        getExpectedPayments(),
+        getPaymentPools(),
+      ]);
+      setStats(dashboardStats);
+      setExpectedPayments(expectedData);
+      setPools(poolsData);
     } catch (e) {
       console.error(e);
     }
@@ -184,6 +200,12 @@ export default function DashboardScreen() {
       </Text>
     </TouchableOpacity>
   );
+
+  const expectedOpen = expectedPayments.filter((item) => item.status === 'open' || item.status === 'partially_paid').length;
+  const needsAttention = expectedPayments.filter((item) => item.status === 'overdue' || item.status === 'partially_paid').length;
+  const expectedTotal = expectedPayments.reduce((sum, item) => sum + item.amount, 0);
+  const collectedTotal = expectedPayments.reduce((sum, item) => sum + item.amount_paid_to_date, 0);
+  const pendingStatement = Math.max(expectedTotal - collectedTotal, 0);
 
   return (
     <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
@@ -365,6 +387,104 @@ export default function DashboardScreen() {
             label="Withdraw" 
             onPress={() => withdrawModalRef.current?.present()} 
           />
+        </View>
+
+        {/* Ask UniPay */}
+        <TouchableOpacity
+          className="rounded-2xl px-4 py-4 mb-5"
+          style={{
+            backgroundColor: activeColors.surface,
+            borderWidth: 1,
+            borderColor: activeColors.border,
+            ...tokens.elevation[isDark ? 'dark' : 'light'].card,
+          }}
+        >
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 4 }}>
+            Ask UniPay anything
+          </Text>
+          <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.sm }}>
+            Try "What needs attention today?"
+          </Text>
+        </TouchableOpacity>
+
+        {/* Status Cards */}
+        <View className="flex-row mb-4" style={{ gap: tokens.spacing.md }}>
+          <TouchableOpacity
+            className="flex-1 rounded-2xl p-4"
+            style={{ backgroundColor: activeColors.surface, borderWidth: 1, borderColor: activeColors.border }}
+            onPress={() => router.push('/expected-payments')}
+          >
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 4 }}>Expected</Text>
+            <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.lg, fontWeight: '700' }}>{expectedOpen}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="flex-1 rounded-2xl p-4"
+            style={{ backgroundColor: activeColors.surface, borderWidth: 1, borderColor: activeColors.border }}
+            onPress={() => router.push('/pools')}
+          >
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 4 }}>Pools</Text>
+            <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.lg, fontWeight: '700' }}>{pools.length}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="flex-1 rounded-2xl p-4"
+            style={{
+              backgroundColor: activeColors.surface,
+              borderWidth: 1,
+              borderColor: needsAttention > 0 ? tokens.colors.semantic.warning : activeColors.border,
+            }}
+          >
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 4 }}>Needs Attention</Text>
+            <Text style={{ color: needsAttention > 0 ? tokens.colors.semantic.warning : activeColors.text.primary, fontSize: tokens.typography.size.lg, fontWeight: '700' }}>
+              {needsAttention}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Expected Payments */}
+        <TouchableOpacity
+          className="rounded-2xl p-4 mb-4"
+          style={{
+            backgroundColor: activeColors.surface,
+            borderWidth: 1,
+            borderColor: activeColors.border,
+          }}
+          onPress={() => router.push('/expected-payments')}
+        >
+          <View className="flex-row items-center justify-between mb-2">
+            <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base, fontWeight: '700' }}>
+              Expected Payments
+            </Text>
+            <ChevronRight size={18} color={activeColors.text.muted} />
+          </View>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm }}>
+            {stats?.currency || 'KES'} {expectedTotal.toLocaleString()}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Collections Summary */}
+        <View
+          className="rounded-2xl p-4 mb-8"
+          style={{
+            backgroundColor: activeColors.surface,
+            borderWidth: 1,
+            borderColor: activeColors.border,
+          }}
+        >
+          <View className="flex-row items-center justify-between mb-4">
+            <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base, fontWeight: '700' }}>Collected</Text>
+            <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base, fontWeight: '700' }}>
+              {stats?.currency || 'KES'} {collectedTotal.toLocaleString()}
+            </Text>
+          </View>
+          <View className="h-px mb-4" style={{ backgroundColor: activeColors.border }} />
+          <View className="flex-row items-center justify-between">
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm }}>Pending statement</Text>
+            <Text style={{ color: tokens.colors.semantic.warning, fontSize: tokens.typography.size.base, fontWeight: '700' }}>
+              {stats?.currency || 'KES'} {pendingStatement.toLocaleString()}
+            </Text>
+          </View>
         </View>
 
         {/* Recent Activity Section Header */}

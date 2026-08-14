@@ -42,6 +42,7 @@ export type SettlementStatus = 'pending' | 'processing' | 'settled' | 'failed';
 export interface Transaction {
   id: string;
   recipient_profile_id: string;
+  payer_reference?: string;
   amount: number;
   currency: string;
   provider_fee: number;

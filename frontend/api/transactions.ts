@@ -1,9 +1,9 @@
 import { Transaction, ReconciliationMatch } from './types';
 
 const MOCK_TRANSACTIONS: Transaction[] = [
-  { id: 'tx_1', recipient_profile_id: 'prof_123', amount: 5000, currency: 'KES', provider_fee: 50, net_amount: 4950, payment_status: 'completed', settlement_status: 'settled', transaction_time: new Date(Date.now() - 86400000 * 2).toISOString(), settled_at: new Date(Date.now() - 86400000).toISOString() },
-  { id: 'tx_2', recipient_profile_id: 'prof_123', amount: 1250, currency: 'KES', provider_fee: 15, net_amount: 1235, payment_status: 'completed', settlement_status: 'processing', transaction_time: new Date(Date.now() - 3600000).toISOString() },
-  { id: 'tx_3', recipient_profile_id: 'prof_123', amount: 10000, currency: 'KES', provider_fee: 100, net_amount: 9900, payment_status: 'failed', settlement_status: 'failed', transaction_time: new Date(Date.now() - 7200000).toISOString() },
+  { id: 'tx_1', recipient_profile_id: 'prof_123', payer_reference: 'Alice Mwangi', amount: 5000, currency: 'KES', provider_fee: 50, net_amount: 4950, payment_status: 'completed', settlement_status: 'settled', transaction_time: new Date(Date.now() - 86400000 * 2).toISOString(), settled_at: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'tx_2', recipient_profile_id: 'prof_123', payer_reference: 'Brian Ouma', amount: 1250, currency: 'KES', provider_fee: 15, net_amount: 1235, payment_status: 'completed', settlement_status: 'processing', transaction_time: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'tx_3', recipient_profile_id: 'prof_123', payer_reference: 'Caroline Achieng', amount: 10000, currency: 'KES', provider_fee: 100, net_amount: 9900, payment_status: 'failed', settlement_status: 'failed', transaction_time: new Date(Date.now() - 7200000).toISOString() },
 ];
 
 /**
