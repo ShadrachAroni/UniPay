@@ -33,10 +33,44 @@ export type PaymentStatus =
 
 export type PayoutStatus = 'pending' | 'processing' | 'success' | 'failed';
 
-export type MoneyDirectionRuleType =
-  | 'split_percentage'
-  | 'fixed_fee'
-  | 'conditional_route';
+export type MoneyDirectionDestinationType =
+  | 'balance'
+  | 'loop_number'
+  | 'bank_account'
+  | (string & {});
+
+export type MoneyDirectionAllocationType =
+  | 'full'
+  | 'percentage'
+  | 'fixed_amount';
+
+export interface MoneyDirectionRule {
+  id: string;
+  profile_id: string;
+  destination_type: MoneyDirectionDestinationType;
+  destination_reference?: string | null;
+  allocation_type: MoneyDirectionAllocationType;
+  allocation_value?: number | null;
+  priority_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MoneyDirectionAllocation {
+  rule_id?: string | null;
+  destination_type: MoneyDirectionDestinationType;
+  destination_reference?: string | null;
+  amount: number;
+}
+
+export interface MoneyDirectionDecision {
+  profile_id: string;
+  settled_amount: number;
+  currency: string;
+  allocations: MoneyDirectionAllocation[];
+  evaluated_at: string;
+}
 
 export interface Profile {
   id: string;

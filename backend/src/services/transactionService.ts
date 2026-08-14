@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { pool } from '../db';
 import { NormalizedTransaction } from '@unipay/shared';
 import { rootLogger } from '../utils/logger';
+import { onSettlementTransition } from './moneyDirectionService';
 
 export interface TransactionEntity {
   id: string;
@@ -39,6 +40,10 @@ export async function recordTransaction(
   if (existingId && inMemoryTransactions.has(existingId)) {
     // Update existing transaction
     const existing = inMemoryTransactions.get(existingId)!;
+    const isNowSettled =
+      normalized.settlement_status === 'settled' &&
+      existing.settlement_status !== 'settled';
+
     const updated: TransactionEntity = {
       ...existing,
       payment_status: normalized.payment_status,
@@ -46,8 +51,24 @@ export async function recordTransaction(
       provider_fee: normalized.provider_fee,
       net_amount: normalized.net_amount,
       raw_payload: normalized.raw_payload,
+      settled_at:
+        normalized.settlement_status === 'settled' && !existing.settled_at
+          ? new Date().toISOString()
+          : existing.settled_at,
     };
     inMemoryTransactions.set(existing.id, updated);
+
+    if (isNowSettled || normalized.settlement_status === 'settled') {
+      try {
+        await onSettlementTransition(updated);
+      } catch (err) {
+        rootLogger.error('Failed to run settlement transition hook', {
+          error: (err as Error).message,
+          transaction_id: updated.id,
+        });
+      }
+    }
+
     return updated;
   }
 
@@ -128,6 +149,18 @@ export async function recordTransaction(
       };
       inMemoryTransactions.set(persisted.id, persisted);
       externalRefMap.set(persisted.external_reference, persisted.id);
+
+      if (persisted.settlement_status === 'settled') {
+        try {
+          await onSettlementTransition(persisted);
+        } catch (err) {
+          rootLogger.error('Failed to run settlement transition hook', {
+            error: (err as Error).message,
+            transaction_id: persisted.id,
+          });
+        }
+      }
+
       return persisted;
     }
   } catch (err) {
@@ -138,6 +171,18 @@ export async function recordTransaction(
 
   inMemoryTransactions.set(record.id, record);
   externalRefMap.set(record.external_reference, record.id);
+
+  if (record.settlement_status === 'settled') {
+    try {
+      await onSettlementTransition(record);
+    } catch (err) {
+      rootLogger.error('Failed to run settlement transition hook', {
+        error: (err as Error).message,
+        transaction_id: record.id,
+      });
+    }
+  }
+
   return record;
 }
 
@@ -253,6 +298,50 @@ export async function listTransactions(filters?: {
   }
 
   return list.slice(0, filters?.limit || 50);
+}
+
+export async function settleTransaction(id: string): Promise<TransactionEntity> {
+  const existing = await getTransactionById(id);
+  if (!existing) {
+    throw new Error('Transaction not found');
+  }
+
+  const now = new Date().toISOString();
+  const updated: TransactionEntity = {
+    ...existing,
+    settlement_status: 'settled',
+    settled_at: existing.settled_at || now,
+  };
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE transactions
+       SET settlement_status = 'settled',
+           settled_at = COALESCE(settled_at, $1)
+       WHERE id = $2
+       RETURNING *`,
+      [now, id]
+    );
+    if (rows.length > 0) {
+      const persisted: TransactionEntity = {
+        ...rows[0],
+        amount: Number(rows[0].amount),
+        provider_fee: Number(rows[0].provider_fee),
+        net_amount: Number(rows[0].net_amount),
+      };
+      inMemoryTransactions.set(id, persisted);
+      await onSettlementTransition(persisted);
+      return persisted;
+    }
+  } catch (err) {
+    rootLogger.debug('Falling back to memory store for settleTransaction', {
+      error: (err as Error).message,
+    });
+  }
+
+  inMemoryTransactions.set(id, updated);
+  await onSettlementTransition(updated);
+  return updated;
 }
 
 export function clearTransactionCache(): void {

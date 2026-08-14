@@ -9,6 +9,10 @@ import {
   reviewIdentity,
 } from '../services/profileService';
 import { createAlias, getAliasesByProfileId } from '../services/aliasService';
+import {
+  getMoneyDirectionRules,
+  setMoneyDirectionRules,
+} from '../services/moneyDirectionService';
 
 export const profilesRouter = Router();
 
@@ -326,6 +330,128 @@ profilesRouter.post(
         return;
       }
       if (err.message?.includes('unsubmitted')) {
+        res.status(400).json({
+          error: 'Bad Request',
+          message: err.message,
+          statusCode: 400,
+        });
+        return;
+      }
+      next(err);
+    }
+  }
+);
+
+const moneyDirectionRuleItemSchema = z.object({
+  id: z.string().optional(),
+  destination_type: z.string().min(1),
+  destination_reference: z.string().optional().nullable(),
+  allocation_type: z.enum(['full', 'percentage', 'fixed_amount']),
+  allocation_value: z.number().optional().nullable(),
+  priority_order: z.number().int().positive().optional(),
+  is_active: z.boolean().optional(),
+});
+
+const updateMoneyDirectionSchema = z.object({
+  rules: z.array(moneyDirectionRuleItemSchema),
+});
+
+/**
+ * GET /api/v1/profiles/:id/money-direction
+ * Fetch money direction routing rules for profile (§17, §18)
+ */
+profilesRouter.get(
+  '/:id/money-direction',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = getParamId(req.params.id);
+      const profile = await getProfileById(id);
+      if (!profile) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: 'Profile not found',
+          statusCode: 404,
+        });
+        return;
+      }
+
+      // Ownership enforcement (§17, §18)
+      if (profile.clerk_user_id !== req.userId) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'You are not authorized to view money direction rules for this profile',
+          statusCode: 403,
+        });
+        return;
+      }
+
+      const rules = await getMoneyDirectionRules(id);
+      res.status(200).json({ profile_id: id, rules });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * PUT /api/v1/profiles/:id/money-direction
+ * Update money direction routing rules for profile (§17, §18)
+ */
+profilesRouter.put(
+  '/:id/money-direction',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parsed = updateMoneyDirectionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: parsed.error.issues[0]?.message || 'Invalid money direction rules payload',
+          details: parsed.error.issues,
+          statusCode: 400,
+        });
+        return;
+      }
+
+      const id = getParamId(req.params.id);
+      const profile = await getProfileById(id);
+      if (!profile) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: 'Profile not found',
+          statusCode: 404,
+        });
+        return;
+      }
+
+      // Ownership enforcement (§17, §18)
+      if (profile.clerk_user_id !== req.userId) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'You are not authorized to edit money direction rules for this profile',
+          statusCode: 403,
+        });
+        return;
+      }
+
+      const updatedRules = await setMoneyDirectionRules(id, parsed.data.rules as any);
+
+      req.logger.info('Updated money direction rules', {
+        profile_id: id,
+        rule_count: updatedRules.length,
+      });
+
+      res.status(200).json({
+        profile_id: id,
+        rules: updatedRules,
+        message: 'Money direction rules updated successfully',
+      });
+    } catch (err: any) {
+      if (
+        err.message?.includes('exceeds 100%') ||
+        err.message?.includes('LOOP mobile number') ||
+        err.message?.includes('Invalid') ||
+        err.message?.includes('Unsupported')
+      ) {
         res.status(400).json({
           error: 'Bad Request',
           message: err.message,
