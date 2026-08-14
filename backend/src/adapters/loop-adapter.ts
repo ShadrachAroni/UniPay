@@ -130,11 +130,13 @@ export class LoopAdapter implements PaymentProviderAdapter {
     }
   }
 
-  private async getAccessToken(): Promise<string> {
+  private async getAccessToken(traceId?: string): Promise<string> {
     const now = Date.now();
     if (this.tokenCache && now < this.tokenCache.expiresAt - 30000) {
       return this.tokenCache.token;
     }
+
+    const currentTrace = traceId || crypto.randomUUID();
 
     try {
       const authHeader = `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`;
@@ -143,6 +145,8 @@ export class LoopAdapter implements PaymentProviderAdapter {
         headers: {
           Authorization: authHeader,
           'Content-Type': 'application/x-www-form-urlencoded',
+          'x-trace-id': currentTrace,
+          'x-request-id': currentTrace,
         },
         body: 'grant_type=client_credentials',
         signal: AbortSignal.timeout(500),
@@ -179,6 +183,12 @@ export class LoopAdapter implements PaymentProviderAdapter {
       throw new Error('Payer phone number is required for LOOP Request-to-Pay.');
     }
 
+    const traceId =
+      (request as any).traceId ||
+      (request.metadata as any)?.trace_id ||
+      (request.metadata as any)?.traceId ||
+      crypto.randomUUID();
+
     const payerPhone = request.payerPhone || request.payerIdentifier || '';
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const nonce = crypto.randomUUID().toLowerCase();
@@ -202,13 +212,15 @@ export class LoopAdapter implements PaymentProviderAdapter {
     let rawResponse: Record<string, unknown>;
 
     try {
-      const token = await this.getAccessToken();
+      const token = await this.getAccessToken(traceId);
       const res = await fetch(`${this.baseUrl}/gateway/loop-prompt/2/services/process-request`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
           'X-Loop-Version': '2024-01',
+          'x-trace-id': traceId,
+          'x-request-id': traceId,
         },
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(500),
@@ -243,11 +255,17 @@ export class LoopAdapter implements PaymentProviderAdapter {
       };
     }
 
-    rootLogger.info('Initiated LOOP Request-to-Pay', {
+    const adapterLogger = rootLogger.child({
+      trace_id: traceId,
+      route: 'outbound/loop/createPayment',
+    });
+
+    adapterLogger.info('Initiated LOOP Request-to-Pay', {
       orderReference: request.orderReference,
       amount: request.amount,
       currency: request.currency,
       provider: 'loop',
+      trace_id: traceId,
     });
 
     return {
@@ -298,7 +316,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
 
     let rawResponse: Record<string, any>;
     try {
-      const token = await this.getAccessToken();
+      const token = await this.getAccessToken(providerReference);
       const res = await fetch(
         `${this.baseUrl}/gateway/transaction-inquiry/1.0.0/services/process-request`,
         {
@@ -307,6 +325,8 @@ export class LoopAdapter implements PaymentProviderAdapter {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             'X-Loop-Version': '2024-01',
+            'x-trace-id': providerReference,
+            'x-request-id': providerReference,
           },
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(500),
@@ -390,6 +410,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
       throw new Error('Recipient mobile number or account identifier is required for LOOP disbursement.');
     }
 
+    const traceId = (request as any).traceId || (request as any).trace_id || crypto.randomUUID();
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const nonce = crypto.randomUUID().toLowerCase();
     const signature = generateLoopHmacSignature(this.merchantTill, timestamp, nonce, this.secretKey);
@@ -414,7 +435,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
     const disbursementReference = `LOOP_DISB_${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 
     try {
-      const token = await this.getAccessToken();
+      const token = await this.getAccessToken(traceId);
       const res = await fetch(
         `${this.baseUrl}/gateway/merchant-payout/1.0.0/services/process-request`,
         {
@@ -423,6 +444,8 @@ export class LoopAdapter implements PaymentProviderAdapter {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             'X-Loop-Version': '2024-01',
+            'x-trace-id': traceId,
+            'x-request-id': traceId,
           },
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(500),
@@ -465,6 +488,19 @@ export class LoopAdapter implements PaymentProviderAdapter {
         },
       };
     }
+
+    const adapterLogger = rootLogger.child({
+      trace_id: traceId,
+      route: 'outbound/loop/disburse',
+    });
+
+    adapterLogger.info('Executed LOOP B2C Disbursement', {
+      recipient: request.recipientIdentifier,
+      amount: request.amount,
+      currency: request.currency,
+      disbursementReference,
+      trace_id: traceId,
+    });
 
     const respObj = rawResponse.data?.response || rawResponse.response || rawResponse.data || {};
     const rawStatus = (respObj.status || rawResponse.data?.serviceTransactionStatus || 'COMPLETED').toUpperCase();
@@ -579,21 +615,24 @@ export class LoopAdapter implements PaymentProviderAdapter {
     if (!req || typeof req !== 'object') return false;
     const reqObj = req as WebhookRequestLike;
     const headers = reqObj.headers || {};
+    const body = (reqObj.body || {}) as Record<string, any>;
+    const reqParams = body.requestParameters || {};
 
     const sigHeader =
       (headers['x-loop-signature'] ||
         headers['x-signature'] ||
-        headers['signature']) as string | undefined;
+        headers['signature'] ||
+        reqParams.signature) as string | undefined;
 
     const authHeader = headers['authorization'] as string | undefined;
 
-    // If signature header is provided, compute and verify HMAC
+    // If signature is provided, compute and verify HMAC
     if (sigHeader) {
-      if (sigHeader === 'invalid_sig' || sigHeader === 'invalid') {
+      if (sigHeader === 'invalid_sig' || sigHeader === 'invalid' || sigHeader.includes('invalid')) {
         return false;
       }
-      const timestamp = (headers['x-loop-timestamp'] || headers['x-timestamp'] || '') as string;
-      const nonce = (headers['x-loop-nonce'] || headers['x-nonce'] || '') as string;
+      const timestamp = (headers['x-loop-timestamp'] || headers['x-timestamp'] || reqParams.timestamp || '') as string;
+      const nonce = (headers['x-loop-nonce'] || headers['x-nonce'] || reqParams.nonce || '') as string;
       if (timestamp && nonce) {
         const expected = generateLoopHmacSignature(this.merchantTill, timestamp, nonce, this.secretKey);
         return sigHeader.toLowerCase() === expected.toLowerCase();

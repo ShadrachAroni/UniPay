@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger, rootLogger } from '../utils/logger';
+import { observabilityService } from '../services/observabilityService';
 
 declare global {
   namespace Express {
@@ -36,6 +37,7 @@ export function requestContextMiddleware(
 
   res.on('finish', () => {
     const durationMs = Date.now() - startTime;
+    observabilityService.recordRequest(res.statusCode, durationMs);
     req.logger.info('HTTP Request processed', {
       statusCode: res.statusCode,
       durationMs,

@@ -169,6 +169,7 @@ export interface LLMRequestOptions {
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
+  traceId?: string;
 }
 
 export interface LLMProvider {
@@ -192,6 +193,8 @@ export class AnthropicLLMProvider implements LLMProvider {
     prompt: string,
     options?: LLMRequestOptions
   ): Promise<string> {
+    const traceId = options?.traceId || crypto.randomUUID();
+
     if (!this.apiKey) {
       // Mock / Offline deterministic fallback when no API key configured
       return this.mockGenerateText(prompt, options);
@@ -215,6 +218,8 @@ export class AnthropicLLMProvider implements LLMProvider {
           'Content-Type': 'application/json',
           'x-api-key': this.apiKey,
           'anthropic-version': '2023-06-01',
+          'x-trace-id': traceId,
+          'x-request-id': traceId,
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(5000),
@@ -228,10 +233,17 @@ export class AnthropicLLMProvider implements LLMProvider {
         content?: Array<{ type: string; text: string }>;
       };
       const text = data.content?.[0]?.text?.trim() || '';
+
+      rootLogger.child({ trace_id: traceId, route: 'outbound/anthropic' }).info('Anthropic LLM query completed', {
+        model: this.model,
+        trace_id: traceId,
+      });
+
       return text;
     } catch (err) {
       rootLogger.warn('Anthropic API request failed, using deterministic fallback', {
         error: (err as Error).message,
+        trace_id: traceId,
       });
       return this.mockGenerateText(prompt, options);
     }
@@ -366,7 +378,10 @@ export class UniPayAIService implements AIService {
   // -----------------------------------------------------------
   // Priority 0 #1: explainMatch (§15)
   // -----------------------------------------------------------
-  async explainMatch(match: ReconciliationMatch): Promise<string> {
+  async explainMatch(
+    match: ReconciliationMatch,
+    traceId?: string
+  ): Promise<string> {
     const inputPayload = {
       match_source: match.match_source,
       match_type: match.match_type,
@@ -388,6 +403,7 @@ export class UniPayAIService implements AIService {
         systemPrompt,
         temperature: 0.1,
         maxTokens: 100,
+        traceId,
       });
 
       if (!explanation) {
@@ -423,7 +439,8 @@ export class UniPayAIService implements AIService {
   // -----------------------------------------------------------
   async answerDashboardQuery(
     profileId: string,
-    query: string
+    query: string,
+    traceId?: string
   ): Promise<QueryAnswer> {
     if (!query || !query.trim()) {
       throw new Error('Query string cannot be empty');
@@ -454,6 +471,7 @@ Return ONLY valid JSON matching this structure:
         systemPrompt,
         temperature: 0.1,
         maxTokens: 250,
+        traceId,
       });
 
       // Extract JSON if wrapped in code blocks

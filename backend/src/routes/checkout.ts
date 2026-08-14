@@ -67,12 +67,13 @@ checkoutRouter.post(
       const estimatedRecipientAmount = Number((amount - estimatedFee).toFixed(2));
       const settlementEstimate = capabilities.settlementEstimate || 'instant';
 
-      rootLogger.info('Resolved checkout payment options', {
+      req.logger.info('Resolved checkout payment options', {
         alias: recipient.alias.alias,
         amount,
         currency,
         provider: adapter.name(),
         rail: primaryRail.adapter_key,
+        trace_id: req.traceId,
       });
 
       res.status(200).json({

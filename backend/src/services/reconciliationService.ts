@@ -567,14 +567,24 @@ export async function detectExceptions(
   }
 
   // 6. Fee Mismatch: Provider fee charged deviates from configured rail fee structure
+  // Batch pre-fetch all rails to prevent N+1 database queries across transactions
+  const { listAllRails } = await import('./paymentRailService');
+  const allRails = await listAllRails();
+  const railMap = new Map<string, any>(
+    allRails.map((r) => [r.adapter_key.toLowerCase(), r])
+  );
+
   for (const tx of transactions) {
     if (tx.payment_status === 'successful' && tx.rail) {
-      const rail = await getRailByAdapterKey(tx.rail);
+      const rail = railMap.get(tx.rail.toLowerCase());
       if (rail && rail.capabilities_json?.feeStructure) {
         const feeConfig = rail.capabilities_json.feeStructure;
-        const expectedFee = Math.round(
-          ((feeConfig.fixed || 0) + (tx.amount * (feeConfig.percentage || 0))) * 100
-        ) / 100;
+        const expectedFee =
+          Math.round(
+            ((feeConfig.fixed || 0) +
+              tx.amount * (feeConfig.percentage || 0)) *
+              100
+          ) / 100;
         
         if (Math.abs(tx.provider_fee - expectedFee) > 0.05) {
           exceptions.push({

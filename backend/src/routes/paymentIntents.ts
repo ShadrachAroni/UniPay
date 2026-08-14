@@ -92,11 +92,12 @@ paymentIntentsRouter.post(
         idempotency_key: idempotencyKey,
       });
 
-      rootLogger.info('Payment intent created / returned', {
+      req.logger.info('Payment intent created / returned', {
         id: intent.id,
         status: intent.status,
         provider: intent.provider,
         rail: intent.rail,
+        trace_id: req.traceId,
       });
 
       res.status(201).json(intent);
@@ -159,9 +160,10 @@ paymentIntentsRouter.post(
             intent.status = statusResult.status;
           }
         } catch (pollErr) {
-          rootLogger.warn('Failed to poll status during intent retry', {
+          req.logger.warn('Failed to poll status during intent retry', {
             intent_id: intent.id,
             error: (pollErr as Error).message,
+            trace_id: req.traceId,
           });
         }
       }

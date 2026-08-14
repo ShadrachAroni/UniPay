@@ -23,6 +23,16 @@ export function createApp(): Express {
         'x-trace-id',
         'x-request-id',
         'x-idempotency-key',
+        'idempotency-key',
+        'x-profile-id',
+      ],
+      exposedHeaders: [
+        'x-trace-id',
+        'x-idempotent-replayed',
+        'Retry-After',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
       ],
     })
   );
@@ -39,8 +49,9 @@ export function createApp(): Express {
   // Idempotency check & replay caching for write operations (Handbook M8.3)
   app.use(idempotencyMiddleware());
 
-  // Direct root health endpoint /health
+  // Direct root health endpoint /health and /api/v1/health
   app.use(healthRouter);
+  app.use('/api/v1', healthRouter);
 
   // Main API Router
   app.use(apiRouter);

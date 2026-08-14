@@ -18,9 +18,10 @@ webhooksRouter.post(
         query: req.query as Record<string, unknown>,
       });
 
-      rootLogger.info('LOOP Webhook processed', {
+      req.logger.info('LOOP Webhook processed', {
         eventId: result.eventId,
         duplicate: result.duplicate,
+        trace_id: req.traceId,
       });
 
       res.status(200).json({

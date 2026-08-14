@@ -37,12 +37,13 @@ aiRouter.post(
 
       const query = parseResult.data.query;
 
-      const answer = await aiService.answerDashboardQuery(profileId, query);
+      const answer = await aiService.answerDashboardQuery(profileId, query, req.traceId);
 
-      rootLogger.info('Executed AI dashboard query', {
+      req.logger.info('Executed AI dashboard query', {
         profileId,
         query: query.slice(0, 100),
         aggregation: answer.aggregation,
+        trace_id: req.traceId,
       });
 
       res.status(200).json(answer);

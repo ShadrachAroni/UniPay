@@ -117,11 +117,12 @@ payoutsRouter.post(
         remarks: parseResult.data.remarks,
       });
 
-      rootLogger.info('Manual payout processed', {
+      req.logger.info('Manual payout processed', {
         payout_id: payout.id,
         profile_id: profileId,
         amount: payout.requested_amount,
         status: payout.status,
+        trace_id: req.traceId,
       });
 
       res.status(201).json({ payout });
