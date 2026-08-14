@@ -15,6 +15,7 @@ import {
 import { LoopAdapter, generateLoopHmacSignature } from '../adapters/loop-adapter';
 import { aiService, AnthropicLLMProvider, listAIInteractions } from '../services/aiService';
 import { createOrUpdateAdminUser, clearAdminUserCache } from '../services/adminService';
+import { clearPayoutCache } from '../services/payoutService';
 
 describe('Cross-Cutting Fixes & Audit Remediation Test Suite', () => {
   let server: any;
@@ -43,6 +44,7 @@ describe('Cross-Cutting Fixes & Audit Remediation Test Suite', () => {
     clearIdempotencyCache();
     clearPaymentIntentCache();
     clearTransactionCache();
+    clearPayoutCache();
     clearAdminUserCache();
     resetRailCache();
   });

@@ -57,8 +57,9 @@ Return ONLY valid JSON matching: {"aggregation": "gross_collections", "filters":
       expected_amount: 1000,
       matched_amount: 1000,
       confidence_score: 1.0,
-      discrepancy_amount: 0,
+      status: 'confirmed',
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
 
     assert.ok(explanation, 'Expected explanation from UniPayAIService');
