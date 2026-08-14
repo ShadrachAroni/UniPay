@@ -1,88 +1,147 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { colors, layout, typography } from '../../theme/tokens';
-import { Icon, IconName } from '../../components/ui/Icon';
-import { Button } from '../../components/ui/Button';
+import { useTheme } from '../../theme/ThemeProvider';
+import { ThemeToggle } from '../../theme/ThemeToggle';
+import {
+  Zap,
+  Shield,
+  AlertTriangle,
+  CreditCard,
+  ArrowRight,
+  CheckCircle2,
+  ChevronLeft,
+} from 'lucide-react-native';
 
 interface NavItem {
   name: string;
   route: string;
-  icon: IconName;
+  icon: any;
   label: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: 'overview', route: '/admin', icon: 'zap', label: 'Overview' },
-  { name: 'users', route: '/admin/users', icon: 'shield', label: 'Users & KYC' },
-  { name: 'exceptions', route: '/admin/exceptions', icon: 'alert', label: 'Exceptions' },
-  { name: 'rails', route: '/admin/rails', icon: 'credit-card', label: 'Payment Rails' },
-  { name: 'payouts', route: '/admin/payouts', icon: 'arrow-right', label: 'Payouts & Disputes' },
-  { name: 'audit', route: '/admin/audit', icon: 'check', label: 'Audit Logs' },
+  { name: 'overview', route: '/admin', icon: Zap, label: 'Overview' },
+  { name: 'users', route: '/admin/users', icon: Shield, label: 'Users & KYC' },
+  { name: 'exceptions', route: '/admin/exceptions', icon: AlertTriangle, label: 'Exceptions' },
+  { name: 'rails', route: '/admin/rails', icon: CreditCard, label: 'Payment Rails' },
+  { name: 'payouts', route: '/admin/payouts', icon: ArrowRight, label: 'Payouts & Disputes' },
+  { name: 'audit', route: '/admin/audit', icon: CheckCircle2, label: 'Audit Logs' },
 ];
 
 export default function AdminLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isSignedIn, isLoaded, getToken } = useAuth();
-  const [isAdminAuthChecking, setIsAdminAuthChecking] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
+  const { tokens, isDark, activeColors } = useTheme();
   const [adminRole, setAdminRole] = useState<'super_admin' | 'support' | 'compliance_reviewer' | null>(null);
 
-  // In test/web mock mode or Clerk mode, determine admin access
   useEffect(() => {
-    // If Clerk is configured and signed in, fetch role or grant demo role
     setAdminRole('super_admin');
   }, [isSignedIn, isLoaded]);
 
-  const activeTab = NAV_ITEMS.find((item) => item.route === pathname)?.name || 'overview';
-
   return (
-    <View style={styles.container}>
+    <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
       {/* Admin Top Header Banner */}
-      <View style={styles.topHeader}>
-        <View style={styles.brandRow}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>OPERATIONS</Text>
+      <View
+        className="flex-row items-center justify-between px-5 py-3.5 border-b"
+        style={{
+          backgroundColor: activeColors.surface,
+          borderColor: activeColors.border,
+        }}
+      >
+        <View className="flex-row items-center gap-3">
+          <TouchableOpacity
+            onPress={() => router.push('/')}
+            className="p-1.5 rounded-lg border mr-1 flex-row items-center"
+            style={{
+              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+              borderColor: activeColors.border,
+            }}
+          >
+            <ChevronLeft size={16} color={activeColors.text.primary} />
+            <Text className="text-xs font-semibold ml-1" style={{ color: activeColors.text.primary }}>
+              App
+            </Text>
+          </TouchableOpacity>
+
+          <View
+            className="px-2 py-0.5 rounded border"
+            style={{
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe',
+              borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : '#93c5fd',
+            }}
+          >
+            <Text className="text-xs font-bold tracking-wider uppercase" style={{ color: activeColors.brand }}>
+              OPERATIONS
+            </Text>
           </View>
-          <Text style={styles.title}>UniPay Admin Console</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{adminRole || 'super_admin'}</Text>
+
+          <Text className="font-bold text-base" style={{ color: activeColors.text.primary }}>
+            UniPay Admin Console
+          </Text>
+
+          <View
+            className="px-2 py-0.5 rounded"
+            style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
+          >
+            <Text className="text-xs font-semibold" style={{ color: tokens.colors.semantic.success }}>
+              {adminRole || 'super_admin'}
+            </Text>
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={() => router.push('/')}
-          style={styles.exitButton}
-          activeOpacity={0.8}
-        >
-          <Icon name="arrow-right" size={14} color={colors.textSecondary} />
-          <Text style={styles.exitText}>Exit to App</Text>
-        </TouchableOpacity>
+        <View className="w-44">
+          <ThemeToggle />
+        </View>
       </View>
 
       {/* Navigation Tabs Bar */}
-      <View style={styles.navBar}>
+      <View
+        className="border-b"
+        style={{
+          backgroundColor: activeColors.surfaceSubtle,
+          borderColor: activeColors.borderSubtle,
+        }}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.navContent}
+          contentContainerStyle={{
+            paddingHorizontal: tokens.spacing.md,
+            paddingVertical: 6,
+            flexDirection: 'row',
+            gap: 6,
+          }}
         >
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.route || (item.route === '/admin' && pathname === '/admin/');
+            const IconComponent = item.icon;
+
             return (
               <TouchableOpacity
                 key={item.name}
                 onPress={() => router.push(item.route as any)}
-                style={[styles.navTab, isActive && styles.navTabActive]}
+                className="flex-row items-center px-3.5 py-2 rounded-xl border"
+                style={{
+                  backgroundColor: isActive
+                    ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff')
+                    : 'transparent',
+                  borderColor: isActive ? activeColors.brand : 'transparent',
+                }}
                 activeOpacity={0.7}
               >
-                <Icon
-                  name={item.icon}
-                  size={16}
-                  color={isActive ? colors.brandLight : colors.textSecondary}
+                <IconComponent
+                  size={15}
+                  color={isActive ? activeColors.brand : activeColors.text.secondary}
                 />
-                <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
+                <Text
+                  className="ml-2 text-xs font-semibold"
+                  style={{
+                    color: isActive ? activeColors.brand : activeColors.text.secondary,
+                  }}
+                >
                   {item.label}
                 </Text>
               </TouchableOpacity>
@@ -92,115 +151,14 @@ export default function AdminLayout() {
       </View>
 
       {/* Main Admin Screen Content */}
-      <View style={styles.content}>
+      <View className="flex-1">
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: colors.bgDark },
+            contentStyle: { backgroundColor: activeColors.background },
           }}
         />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgDark,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: layout.spacing.lg,
-    paddingVertical: layout.spacing.md,
-    backgroundColor: colors.bgCard,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: layout.spacing.sm,
-  },
-  badge: {
-    backgroundColor: colors.brandGlow,
-    borderColor: colors.brandLight,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: layout.borderRadius.sm,
-  },
-  badgeText: {
-    color: colors.brandLight,
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-  },
-  roleBadge: {
-    backgroundColor: colors.bgInput,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: layout.borderRadius.sm,
-  },
-  roleText: {
-    color: colors.verified,
-    fontSize: 11,
-    fontWeight: typography.weights.semibold,
-  },
-  exitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: layout.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: layout.borderRadius.sm,
-    backgroundColor: colors.bgCardHover,
-  },
-  exitText: {
-    color: colors.textSecondary,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.medium,
-  },
-  navBar: {
-    backgroundColor: colors.bgCardSubtle,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
-  },
-  navContent: {
-    paddingHorizontal: layout.spacing.md,
-    paddingVertical: layout.spacing.xs,
-    flexDirection: 'row',
-    gap: layout.spacing.sm,
-  },
-  navTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: layout.spacing.md,
-    paddingVertical: layout.spacing.sm,
-    borderRadius: layout.borderRadius.md,
-  },
-  navTabActive: {
-    backgroundColor: colors.bgCardHover,
-    borderColor: colors.border,
-    borderWidth: 1,
-  },
-  navLabel: {
-    color: colors.textSecondary,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-  },
-  navLabelActive: {
-    color: colors.textPrimary,
-    fontWeight: typography.weights.bold,
-  },
-  content: {
-    flex: 1,
-  },
-});

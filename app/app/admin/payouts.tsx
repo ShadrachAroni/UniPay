@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Chip } from '../../components/ui/Chip';
 import { Payout, Dispute } from '@unipay/shared';
+import {
+  CreditCard,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  X,
+  ArrowRight,
+  ShieldAlert,
+} from 'lucide-react-native';
 
 export default function AdminPayoutsScreen() {
+  const { tokens, isDark, activeColors } = useTheme();
   const [activeTab, setActiveTab] = useState<'payouts' | 'disputes'>('payouts');
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
@@ -43,7 +53,6 @@ export default function AdminPayoutsScreen() {
         }
       }
     } catch {
-      // Demo fallbacks
       if (activeTab === 'payouts') {
         setPayouts([
           {
@@ -126,119 +135,140 @@ export default function AdminPayoutsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerRow}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: activeColors.background }}
+      contentContainerStyle={{ padding: tokens.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' }}
+    >
+      <View className="flex-row justify-between items-center mb-6 flex-wrap gap-4">
         <View>
-          <Text style={styles.pageTitle}>Payout & Dispute Interventions</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+            Payout & Dispute Interventions
+          </Text>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
             Manual intervention controls for stuck payouts and customer dispute resolution
           </Text>
         </View>
-        <Button title="Refresh Queue" size="sm" variant="secondary" icon="zap" onPress={fetchData} />
+        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchData} />
       </View>
 
       {/* Sub-tab Selector */}
-      <View style={styles.tabSelector}>
-        <TouchableOpacity
-          style={[styles.selectorBtn, activeTab === 'payouts' && styles.selectorBtnActive]}
+      <View className="flex-row gap-2 mb-6">
+        <Chip
+          label="Payout Disbursements"
+          selected={activeTab === 'payouts'}
           onPress={() => setActiveTab('payouts')}
-        >
-          <Text style={[styles.selectorText, activeTab === 'payouts' && styles.selectorTextActive]}>
-            Payout Disbursements
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.selectorBtn, activeTab === 'disputes' && styles.selectorBtnActive]}
+        />
+        <Chip
+          label="Dispute Cases Queue"
+          selected={activeTab === 'disputes'}
           onPress={() => setActiveTab('disputes')}
-        >
-          <Text style={[styles.selectorText, activeTab === 'disputes' && styles.selectorTextActive]}>
-            Dispute Cases Queue
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       {/* Table Content */}
-      <Card style={styles.tableCard}>
+      <Card style={{ padding: 0 }}>
         {loading ? (
-          <View style={{ gap: 12 }}>
-            <Skeleton width="100%" height={40} />
-            <Skeleton width="100%" height={40} />
+          <View className="p-4 gap-3">
+            <Skeleton width="100%" height={50} />
+            <Skeleton width="100%" height={50} />
           </View>
         ) : activeTab === 'payouts' ? (
           payouts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Icon name="check" size={32} color={colors.verified} />
-              <Text style={styles.emptyText}>No payouts found</Text>
+            <View className="p-12 items-center justify-center">
+              <CheckCircle2 size={36} color={tokens.colors.semantic.success} />
+              <Text className="mt-2 text-sm" style={{ color: activeColors.text.muted }}>
+                No payouts found
+              </Text>
             </View>
           ) : (
-            payouts.map((p) => (
-              <View key={p.id} style={styles.tableRow}>
-                <View style={styles.mainCol}>
-                  <Text style={styles.mainTitle}>
+            payouts.map((p, index) => (
+              <View
+                key={p.id}
+                className="flex-row justify-between items-center p-4 border-b flex-wrap gap-4"
+                style={{
+                  borderColor: activeColors.border,
+                  backgroundColor: index % 2 === 0 ? activeColors.surface : activeColors.surfaceSubtle,
+                }}
+              >
+                <View className="flex-2 min-w-[240px]">
+                  <Text className="font-semibold text-sm" style={{ color: activeColors.text.primary }}>
                     KES {p.requested_amount.toLocaleString()} → {p.destination_type} ({p.destination_reference})
                   </Text>
-                  <Text style={styles.subText}>
+                  <Text className="text-xs mt-1" style={{ color: activeColors.text.muted }}>
                     ID: {p.id} · Provider: {p.provider} · Profile: {p.profile_id}
                   </Text>
                 </View>
-                <View style={styles.statusCol}>
-                  <View
-                    style={[
-                      styles.badge,
-                      p.status === 'completed' && styles.badgeSuccess,
-                      p.status === 'failed' && styles.badgeError,
-                      p.status === 'processing' && styles.badgeWarning,
-                    ]}
-                  >
-                    <Text style={styles.badgeText}>{p.status.toUpperCase()}</Text>
-                  </View>
-                </View>
-                <View style={styles.actionCol}>
-                  <Button
-                    title="Intervene"
+
+                <View className="flex-1 items-center">
+                  <Chip
+                    label={p.status}
+                    variant={
+                      p.status === 'completed'
+                        ? 'success'
+                        : p.status === 'failed'
+                        ? 'error'
+                        : 'warning'
+                    }
                     size="sm"
-                    variant="outline"
-                    onPress={() => {
-                      setSelectedPayout(p);
-                      setPayoutModalVisible(true);
-                    }}
                   />
                 </View>
+
+                <Button
+                  title="Intervene"
+                  size="sm"
+                  variant="outline"
+                  onPress={() => {
+                    setSelectedPayout(p);
+                    setPayoutModalVisible(true);
+                  }}
+                />
               </View>
             ))
           )
         ) : disputes.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="check" size={32} color={colors.verified} />
-            <Text style={styles.emptyText}>No active dispute cases</Text>
+          <View className="p-12 items-center justify-center">
+            <CheckCircle2 size={36} color={tokens.colors.semantic.success} />
+            <Text className="mt-2 text-sm" style={{ color: activeColors.text.muted }}>
+              No active dispute cases
+            </Text>
           </View>
         ) : (
-          disputes.map((d) => (
-            <View key={d.id} style={styles.tableRow}>
-              <View style={styles.mainCol}>
-                <Text style={styles.mainTitle}>
-                  KES {d.amount.toLocaleString()} · Reason: {d.reason}
+          disputes.map((d, index) => (
+            <View
+              key={d.id}
+              className="flex-row justify-between items-center p-4 border-b flex-wrap gap-4"
+              style={{
+                borderColor: activeColors.border,
+                backgroundColor: index % 2 === 0 ? activeColors.surface : activeColors.surfaceSubtle,
+              }}
+            >
+              <View className="flex-2 min-w-[240px]">
+                <Text className="font-semibold text-sm" style={{ color: activeColors.text.primary }}>
+                  KES {d.amount.toLocaleString()} · {d.reason}
                 </Text>
-                <Text style={styles.subText}>
+                <Text className="text-xs mt-1" style={{ color: activeColors.text.muted }}>
                   Case: {d.id} · TX ID: {d.transaction_id || 'None'} · Profile: {d.profile_id}
                 </Text>
               </View>
-              <View style={styles.statusCol}>
-                <View style={[styles.badge, d.status === 'open' ? styles.badgeWarning : styles.badgeSuccess]}>
-                  <Text style={styles.badgeText}>{d.status.toUpperCase()}</Text>
-                </View>
-              </View>
-              <View style={styles.actionCol}>
-                <Button
-                  title="Resolve Dispute"
+
+              <View className="flex-1 items-center">
+                <Chip
+                  label={d.status}
+                  variant={d.status === 'open' ? 'warning' : 'success'}
                   size="sm"
-                  variant="outline"
-                  onPress={() => {
-                    setSelectedDispute(d);
-                    setDisputeModalVisible(true);
-                  }}
                 />
               </View>
+
+              <Button
+                title="Resolve Dispute"
+                size="sm"
+                variant="outline"
+                onPress={() => {
+                  setSelectedDispute(d);
+                  setDisputeModalVisible(true);
+                }}
+              />
             </View>
           ))
         )}
@@ -246,41 +276,53 @@ export default function AdminPayoutsScreen() {
 
       {/* Payout Intervention Modal */}
       <Modal visible={payoutModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Payout Intervention</Text>
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 480 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                Payout Intervention
+              </Text>
+              <TouchableOpacity onPress={() => setPayoutModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
+              </TouchableOpacity>
             </View>
+
             {selectedPayout && (
-              <View style={{ gap: 12 }}>
-                <Text style={styles.detailText}>
-                  Payout Amount: KES {selectedPayout.requested_amount.toLocaleString()}
+              <View className="gap-3">
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Payout Amount: <Text className="font-bold">KES {selectedPayout.requested_amount.toLocaleString()}</Text>
                 </Text>
-                <Text style={styles.detailText}>Destination: {selectedPayout.destination_type}</Text>
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Destination: <Text className="font-semibold">{selectedPayout.destination_type}</Text>
+                </Text>
+
                 <TextInput
-                  style={styles.input}
+                  className="p-3 rounded-xl border text-sm"
+                  style={{
+                    backgroundColor: activeColors.input,
+                    borderColor: activeColors.border,
+                    color: activeColors.text.primary,
+                  }}
                   placeholder="Reason for intervention (audit requirement)..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={activeColors.text.muted}
                   value={payoutReason}
                   onChangeText={setPayoutReason}
                 />
-                <View style={styles.modalButtons}>
+
+                <View className="flex-row gap-2 mt-3 flex-wrap">
                   <Button
                     title="Retry Payout"
                     variant="primary"
                     loading={actionLoading}
                     onPress={() => handlePayoutIntervention('retry')}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Cancel & Fail"
                     variant="danger"
                     loading={actionLoading}
                     onPress={() => handlePayoutIntervention('cancel')}
-                  />
-                  <Button
-                    title="Close"
-                    variant="secondary"
-                    onPress={() => setPayoutModalVisible(false)}
+                    style={{ flex: 1 }}
                   />
                 </View>
               </View>
@@ -291,39 +333,53 @@ export default function AdminPayoutsScreen() {
 
       {/* Dispute Resolution Modal */}
       <Modal visible={disputeModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Dispute Case Resolution</Text>
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 480 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                Dispute Case Resolution
+              </Text>
+              <TouchableOpacity onPress={() => setDisputeModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
+              </TouchableOpacity>
             </View>
+
             {selectedDispute && (
-              <View style={{ gap: 12 }}>
-                <Text style={styles.detailText}>Dispute Amount: KES {selectedDispute.amount.toLocaleString()}</Text>
-                <Text style={styles.detailText}>Reason: {selectedDispute.reason}</Text>
+              <View className="gap-3">
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Dispute Amount: <Text className="font-bold">KES {selectedDispute.amount.toLocaleString()}</Text>
+                </Text>
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Reason: {selectedDispute.reason}
+                </Text>
+
                 <TextInput
-                  style={styles.input}
+                  className="p-3 rounded-xl border text-sm"
+                  style={{
+                    backgroundColor: activeColors.input,
+                    borderColor: activeColors.border,
+                    color: activeColors.text.primary,
+                  }}
                   placeholder="Resolution notes for merchant/customer..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={activeColors.text.muted}
                   value={disputeNotes}
                   onChangeText={setDisputeNotes}
                 />
-                <View style={styles.modalButtons}>
+
+                <View className="flex-row gap-2 mt-3 flex-wrap">
                   <Button
                     title="Refund Customer"
                     variant="primary"
                     loading={actionLoading}
                     onPress={() => handleResolveDispute('resolved_refund')}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Reject Claim"
                     variant="danger"
                     loading={actionLoading}
                     onPress={() => handleResolveDispute('resolved_rejected')}
-                  />
-                  <Button
-                    title="Close"
-                    variant="secondary"
-                    onPress={() => setDisputeModalVisible(false)}
+                    style={{ flex: 1 }}
                   />
                 </View>
               </View>
@@ -334,37 +390,3 @@ export default function AdminPayoutsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  contentContainer: { padding: layout.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  pageTitle: { color: colors.textPrimary, fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold },
-  pageSubtitle: { color: colors.textSecondary, fontSize: typography.sizes.sm, marginTop: 4 },
-  tabSelector: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  selectorBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: layout.borderRadius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border },
-  selectorBtnActive: { backgroundColor: colors.brandGlow, borderColor: colors.brandLight },
-  selectorText: { color: colors.textSecondary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  selectorTextActive: { color: colors.brandLight },
-  tableCard: { padding: 0 },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: layout.spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  mainCol: { flex: 2, gap: 4 },
-  mainTitle: { color: colors.textPrimary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  subText: { color: colors.textMuted, fontSize: typography.sizes.xs },
-  statusCol: { flex: 1, alignItems: 'center' },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: layout.borderRadius.sm },
-  badgeSuccess: { backgroundColor: colors.verifiedBg },
-  badgeError: { backgroundColor: colors.errorBg },
-  badgeWarning: { backgroundColor: colors.warningBg },
-  badgeText: { fontSize: 10, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  actionCol: { marginLeft: 12 },
-  emptyState: { padding: 32, alignItems: 'center', gap: 8 },
-  emptyText: { color: colors.textMuted, fontSize: typography.sizes.sm },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalCard: { width: '100%', maxWidth: 480, backgroundColor: colors.bgCard },
-  modalHeader: { marginBottom: 12 },
-  modalTitle: { color: colors.textPrimary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  detailText: { color: colors.textSecondary, fontSize: typography.sizes.sm },
-  input: { backgroundColor: colors.bgInput, borderColor: colors.border, borderWidth: 1, borderRadius: layout.borderRadius.md, padding: 10, color: colors.textPrimary },
-  modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
-});

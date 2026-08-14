@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Icon } from './Icon';
-import { colors, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
+import { CheckCircle2, Clock } from 'lucide-react-native';
 
 export interface VerifiedBadgeProps {
   status?: string;
@@ -16,59 +16,56 @@ export function VerifiedBadge({
   size = 'md',
   showLabel = true,
 }: VerifiedBadgeProps) {
+  const { tokens, isDark } = useTheme();
   const verified = isVerified || status === 'approved' || status === 'verified';
+  const isSm = size === 'sm';
+  const isLg = size === 'lg';
+  const iconSize = isSm ? 12 : isLg ? 16 : 14;
 
   if (!verified) {
     if (!showLabel) return null;
     return (
-      <View style={[styles.badge, styles.unverifiedBadge]}>
-        <Icon name="clock" size={size === 'sm' ? 12 : 14} color={colors.warning} />
-        <Text style={[styles.badgeText, styles.unverifiedText]}>Unverified ID</Text>
+      <View
+        className="flex-row items-center rounded-full border px-2 py-0.5"
+        style={{
+          backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7',
+          borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#fde68a',
+        }}
+      >
+        <Clock size={iconSize} color={tokens.colors.semantic.warning} />
+        <Text
+          className="ml-1 font-semibold"
+          style={{
+            fontSize: isSm ? 10 : 11,
+            color: tokens.colors.semantic.warning,
+          }}
+        >
+          Unverified ID
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.badge, styles.verifiedBadge]}>
-      <Icon
-        name="check-circle"
-        size={size === 'sm' ? 12 : size === 'lg' ? 18 : 14}
-        color={colors.verified}
-      />
+    <View
+      className="flex-row items-center rounded-full border px-2 py-0.5"
+      style={{
+        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
+        borderColor: isDark ? 'rgba(34, 197, 94, 0.3)' : '#86efac',
+      }}
+    >
+      <CheckCircle2 size={iconSize} color={tokens.colors.semantic.success} />
       {showLabel && (
-        <Text style={[styles.badgeText, styles.verifiedText]}>Verified Merchant</Text>
+        <Text
+          className="ml-1 font-semibold"
+          style={{
+            fontSize: isSm ? 10 : 11,
+            color: tokens.colors.semantic.success,
+          }}
+        >
+          Verified Merchant
+        </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 9999,
-  },
-  verifiedBadge: {
-    backgroundColor: colors.verifiedBg,
-    borderWidth: 1,
-    borderColor: colors.verifiedBorder,
-  },
-  unverifiedBadge: {
-    backgroundColor: colors.warningBg,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  badgeText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-  },
-  verifiedText: {
-    color: colors.verified,
-  },
-  unverifiedText: {
-    color: colors.warning,
-  },
-});

@@ -148,8 +148,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
 
   describe('2. Available-to-Withdraw Balance Calculation Service (§11, §18, Task 3)', () => {
     it('calculates available and ledger balance against settled transactions and mixed payout statuses', async () => {
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
       const prof = await createProfile({
-        clerk_user_id: 'user_bal_test_1',
+        clerk_user_id: 'user_bal_test_' + runId,
         account_type: 'business',
         display_name: 'Amina Electronics',
         owner_name: 'Amina Electronics Ltd',
@@ -166,8 +167,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
       const tx1: NormalizedTransaction = {
         provider: 'loop',
         rail: 'loop',
-        internal_reference: 'INT_TX_PEND_01',
-        external_reference: 'EXT_TX_PEND_01',
+        internal_reference: 'INT_TX_PEND_' + runId,
+        external_reference: 'EXT_TX_PEND_' + runId,
         amount: 5000,
         currency: 'KES',
         provider_fee: 75,
@@ -188,8 +189,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
       const tx2: NormalizedTransaction = {
         provider: 'loop',
         rail: 'loop',
-        internal_reference: 'INT_TX_SETT_01',
-        external_reference: 'EXT_TX_SETT_01',
+        internal_reference: 'INT_TX_SETT_' + runId,
+        external_reference: 'EXT_TX_SETT_' + runId,
         amount: 10000,
         currency: 'KES',
         provider_fee: 150,
@@ -213,7 +214,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         profile_id: prof.id,
         amount: 3000,
         currency: 'KES',
-        idempotency_key: 'idem_payout_bal_01',
+        idempotency_key: 'idem_payout_bal_01_' + runId,
       });
 
       bal = await calculateProfileBalance(prof.id);
@@ -226,7 +227,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         profile_id: prof.id,
         amount: 2000,
         currency: 'KES',
-        idempotency_key: 'idem_payout_bal_02',
+        idempotency_key: 'idem_payout_bal_02_' + runId,
       });
 
       bal = await calculateProfileBalance(prof.id);
@@ -237,8 +238,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
 
   describe('3. Automatic Disbursement Orchestration on Settlement Transition (§12, §17)', () => {
     it('creates exactly one payout row and calls disburse() when money direction routes to LOOP number', async () => {
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
       const prof = await createProfile({
-        clerk_user_id: 'user_auto_disb_1',
+        clerk_user_id: 'user_auto_disb_' + runId,
         account_type: 'individual',
         display_name: 'David Kimani',
         owner_name: 'David Kimani',
@@ -266,8 +268,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
       const tx: NormalizedTransaction = {
         provider: 'loop',
         rail: 'loop',
-        internal_reference: 'INT_TX_AUTO_01',
-        external_reference: 'EXT_TX_AUTO_01',
+        internal_reference: 'INT_TX_AUTO_' + runId,
+        external_reference: 'EXT_TX_AUTO_' + runId,
         amount: 10000,
         currency: 'KES',
         provider_fee: 0,
@@ -301,8 +303,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
     });
 
     it('does not create any payout row when money direction allocates 100% to balance', async () => {
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
       const prof = await createProfile({
-        clerk_user_id: 'user_auto_bal_1',
+        clerk_user_id: 'user_auto_bal_' + runId,
         account_type: 'individual',
         display_name: 'Grace Hopper',
         owner_name: 'Grace Hopper',
@@ -313,8 +316,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
       const tx: NormalizedTransaction = {
         provider: 'loop',
         rail: 'loop',
-        internal_reference: 'INT_TX_DEF_BAL',
-        external_reference: 'EXT_TX_DEF_BAL',
+        internal_reference: 'INT_TX_DEF_BAL_' + runId,
+        external_reference: 'EXT_TX_DEF_BAL_' + runId,
         amount: 4000,
         currency: 'KES',
         provider_fee: 0,
@@ -338,8 +341,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
 
   describe('4. Manual Disbursement (POST /payouts) & Idempotency (§12, §18)', () => {
     it('enforces available balance ceiling and rejects payout requests above balance', async () => {
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
       const prof = await createProfile({
-        clerk_user_id: 'user_man_payout_1',
+        clerk_user_id: 'user_man_payout_' + runId,
         account_type: 'business',
         display_name: 'TechMart',
         owner_name: 'TechMart Ltd',
@@ -351,8 +355,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         {
           provider: 'loop',
           rail: 'loop',
-          internal_reference: 'INT_TX_TM_01',
-          external_reference: 'EXT_TX_TM_01',
+          internal_reference: 'INT_TX_TM_' + runId,
+          external_reference: 'EXT_TX_TM_' + runId,
           amount: 5000,
           currency: 'KES',
           provider_fee: 0,
@@ -373,7 +377,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
           profile_id: prof.id,
           amount: 6000,
           currency: 'KES',
-          idempotency_key: 'idem_overdraw_001',
+          idempotency_key: 'idem_overdraw_' + runId,
         });
       }, /exceeds available balance/);
 
@@ -382,7 +386,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         profile_id: prof.id,
         amount: 4000,
         currency: 'KES',
-        idempotency_key: 'idem_valid_withdraw_001',
+        idempotency_key: 'idem_valid_withdraw_' + runId,
       });
 
       assert.strictEqual(payout.requested_amount, 4000);
@@ -394,8 +398,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
     });
 
     it('deduplicates manual payout on idempotency key without double-disbursing', async () => {
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
       const prof = await createProfile({
-        clerk_user_id: 'user_idem_payout',
+        clerk_user_id: 'user_idem_payout_' + runId,
         account_type: 'individual',
         display_name: 'Alice Wambui',
         owner_name: 'Alice Wambui',
@@ -406,8 +411,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         {
           provider: 'loop',
           rail: 'loop',
-          internal_reference: 'INT_TX_AW_01',
-          external_reference: 'EXT_TX_AW_01',
+          internal_reference: 'INT_TX_AW_' + runId,
+          external_reference: 'EXT_TX_AW_' + runId,
           amount: 8000,
           currency: 'KES',
           provider_fee: 0,
@@ -422,7 +427,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         prof.id
       );
 
-      const key = 'withdraw_tap_retry_key_001';
+      const key = 'withdraw_tap_retry_key_' + runId;
 
       // First call
       const p1 = await createPayout({
@@ -452,7 +457,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
 
   describe('5. Live REST API Endpoints & Ownership Enforcement (§18)', () => {
     it('GET /api/v1/profiles/:id/balance returns balance for authenticated owner', async () => {
-      const ownerClerkId = 'test_clerk_owner_bal_' + Date.now();
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
+      const ownerClerkId = 'test_clerk_owner_bal_' + runId;
       const prof = await createProfile({
         clerk_user_id: ownerClerkId,
         account_type: 'business',
@@ -465,8 +471,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         {
           provider: 'loop',
           rail: 'loop',
-          internal_reference: 'INT_TX_REST_BAL_01',
-          external_reference: 'EXT_TX_REST_BAL_01',
+          internal_reference: 'INT_TX_REST_BAL_' + runId,
+          external_reference: 'EXT_TX_REST_BAL_' + runId,
           amount: 12000,
           currency: 'KES',
           provider_fee: 180,
@@ -495,8 +501,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
     });
 
     it('GET /api/v1/profiles/:id/balance returns 403 Forbidden when accessed by non-owner, and 401 when unauthenticated', async () => {
-      const ownerClerkId = 'test_clerk_owner_bal_1_' + Date.now();
-      const otherClerkId = 'test_clerk_other_bal_2_' + Date.now();
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
+      const ownerClerkId = 'test_clerk_owner_bal_1_' + runId;
+      const otherClerkId = 'test_clerk_other_bal_2_' + runId;
 
       const prof = await createProfile({
         clerk_user_id: ownerClerkId,
@@ -519,7 +526,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
     });
 
     it('POST /api/v1/payouts creates payout and enforces balance check via REST', async () => {
-      const ownerClerkId = 'test_clerk_payout_owner_' + Date.now();
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
+      const ownerClerkId = 'test_clerk_payout_owner_' + runId;
       const prof = await createProfile({
         clerk_user_id: ownerClerkId,
         account_type: 'business',
@@ -532,8 +540,8 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         {
           provider: 'loop',
           rail: 'loop',
-          internal_reference: 'INT_TX_MM_01',
-          external_reference: 'EXT_TX_MM_01',
+          internal_reference: 'INT_TX_MM_' + runId,
+          external_reference: 'EXT_TX_MM_' + runId,
           amount: 6000,
           currency: 'KES',
           provider_fee: 0,
@@ -558,7 +566,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         body: JSON.stringify({
           profile_id: prof.id,
           amount: 7000,
-          idempotency_key: 'rest_payout_overdraw',
+          idempotency_key: 'rest_payout_overdraw_' + runId,
         }),
       });
 
@@ -576,7 +584,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         body: JSON.stringify({
           profile_id: prof.id,
           amount: 2500,
-          idempotency_key: 'rest_payout_good_01',
+          idempotency_key: 'rest_payout_good_' + runId,
           destination_type: 'loop_number',
           destination_reference: '+254722334455',
         }),
@@ -616,8 +624,9 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
     });
 
     it('POST /api/v1/payouts returns 403 when trying to disburse from another user profile', async () => {
-      const ownerClerkId = 'test_clerk_real_owner_' + Date.now();
-      const thiefClerkId = 'test_clerk_attacker_' + Date.now();
+      const runId = Date.now() + '_' + Math.random().toString(36).slice(2);
+      const ownerClerkId = 'test_clerk_real_owner_' + runId;
+      const thiefClerkId = 'test_clerk_attacker_' + runId;
 
       const prof = await createProfile({
         clerk_user_id: ownerClerkId,
@@ -635,7 +644,7 @@ describe('Phase 6 Verification Test Suite — Disbursement & Payout Orchestratio
         body: JSON.stringify({
           profile_id: prof.id,
           amount: 500,
-          idempotency_key: 'rest_thief_attempt',
+          idempotency_key: 'rest_thief_attempt_' + runId,
         }),
       });
 

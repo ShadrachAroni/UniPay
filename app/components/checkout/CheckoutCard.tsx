@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { useCheckout } from '../../hooks/useCheckout';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { ProfileHeaderSkeleton } from '../ui/Skeleton';
 import { FeeBreakdown } from './FeeBreakdown';
 import { PaymentStatusView } from './PaymentStatusView';
-import { Icon } from '../ui/Icon';
+import { ThemeToggle } from '../../theme/ThemeToggle';
+import { ShieldCheck, AlertCircle, RefreshCw, Lock, ArrowRight } from 'lucide-react-native';
 
 export interface CheckoutCardProps {
   alias: string;
@@ -18,6 +20,9 @@ export interface CheckoutCardProps {
 }
 
 export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardProps) {
+  const { tokens, isDark } = useTheme();
+  const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
+
   const {
     step,
     recipient,
@@ -44,17 +49,32 @@ export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardP
 
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContainer}
+      contentContainerStyle={[styles.scrollContainer, { backgroundColor: activeColors.background }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
-        {/* UniPay Branding & Trust Header */}
-        <View style={styles.brandHeader}>
-          <View style={styles.logoBadge}>
-            <Icon name="shield-check" size={18} color={colors.brandLight} />
-            <Text style={styles.brandTitle}>UniPay Checkout</Text>
+        {/* Top Controls / Brand Header */}
+        <View style={styles.topBar}>
+          <View style={styles.brandHeader}>
+            <View style={styles.logoBadge}>
+              <View
+                className="w-8 h-8 rounded-full items-center justify-center mr-2"
+                style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe' }}
+              >
+                <ShieldCheck size={18} color={activeColors.brand} />
+              </View>
+              <Text style={[styles.brandTitle, { color: activeColors.text.primary }]}>
+                UniPay Checkout
+              </Text>
+            </View>
+            <Text style={[styles.brandSub, { color: activeColors.text.muted }]}>
+              Instant, zero-friction KES settlement
+            </Text>
           </View>
-          <Text style={styles.brandSub}>Instant, zero-friction KES settlement</Text>
+
+          <View style={styles.themeToggleContainer}>
+            <ThemeToggle />
+          </View>
         </View>
 
         <Card variant="glow" style={styles.card}>
@@ -63,9 +83,13 @@ export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardP
             <ProfileHeaderSkeleton />
           ) : recipientError ? (
             <View style={styles.errorContainer}>
-              <Icon name="alert-circle" size={32} color={colors.error} />
-              <Text style={styles.errorTitle}>Recipient Not Found</Text>
-              <Text style={styles.errorSub}>{recipientError}</Text>
+              <AlertCircle size={32} color={tokens.colors.semantic.error} />
+              <Text style={[styles.errorTitle, { color: tokens.colors.semantic.error }]}>
+                Recipient Not Found
+              </Text>
+              <Text style={[styles.errorSub, { color: activeColors.text.secondary }]}>
+                {recipientError}
+              </Text>
               <Button
                 title="Try Again"
                 onPress={fetchRecipient}
@@ -77,28 +101,29 @@ export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardP
             </View>
           ) : (
             <View style={styles.recipientHeader}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarInitial}>
-                  {(recipient?.display_name || cleanHandle)[0].toUpperCase()}
-                </Text>
-              </View>
+              <Avatar
+                name={recipient?.display_name || cleanHandle}
+                id={recipient?.profile_id}
+                size={48}
+              />
 
               <View style={styles.recipientInfo}>
                 <View style={styles.nameRow}>
-                  <Text style={styles.recipientName} numberOfLines={1}>
+                  <Text
+                    style={[styles.recipientName, { color: activeColors.text.primary }]}
+                    numberOfLines={1}
+                  >
                     {recipient?.display_name}
                   </Text>
                   {recipient?.is_verified && (
-                    <VerifiedBadge
-                      isVerified={true}
-                      size="sm"
-                      showLabel={false}
-                    />
+                    <VerifiedBadge isVerified={true} size="sm" showLabel={false} />
                   )}
                 </View>
 
                 <View style={styles.handleRow}>
-                  <Text style={styles.handleText}>{cleanHandle}</Text>
+                  <Text style={[styles.handleText, { color: activeColors.text.muted }]}>
+                    {cleanHandle}
+                  </Text>
                   <VerifiedBadge
                     isVerified={recipient?.is_verified}
                     status={recipient?.verification_status}
@@ -115,7 +140,7 @@ export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardP
             <>
               {step === 'amount_entry' && (
                 <View style={styles.formContainer}>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
 
                   <Input
                     label="Payment Amount"
@@ -180,8 +205,8 @@ export function CheckoutCard({ alias, initialAmount, apiBaseUrl }: CheckoutCardP
 
         {/* Security / Unauthenticated Guarantee Notice (§19) */}
         <View style={styles.footer}>
-          <Icon name="lock" size={13} color={colors.textMuted} />
-          <Text style={styles.footerText}>
+          <Lock size={13} color={activeColors.text.muted} />
+          <Text style={[styles.footerText, { color: activeColors.text.muted }]}>
             Secured by UniPay • No account or sign-in required to pay
           </Text>
         </View>
@@ -195,55 +220,48 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: layout.spacing.md,
-    backgroundColor: colors.bgDark,
+    padding: 16,
   },
   container: {
     width: '100%',
-    maxWidth: layout.maxWidth,
+    maxWidth: 480,
     alignItems: 'center',
+  },
+  topBar: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   brandHeader: {
     alignItems: 'center',
-    marginBottom: layout.spacing.md,
+    marginBottom: 12,
   },
   logoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     marginBottom: 4,
   },
   brandTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   brandSub: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 12,
+  },
+  themeToggleContainer: {
+    width: '100%',
+    maxWidth: 240,
+    marginTop: 4,
   },
   card: {
     width: '100%',
-    padding: layout.spacing.lg,
+    padding: 20,
   },
   recipientHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: '#FFFFFF',
   },
   recipientInfo: {
     flex: 1,
@@ -255,9 +273,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   recipientName: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
     flexShrink: 1,
   },
   handleRow: {
@@ -267,40 +284,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   handleText: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 12,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
-    marginVertical: layout.spacing.md,
+    marginVertical: 16,
   },
   formContainer: {
     width: '100%',
   },
   errorContainer: {
     alignItems: 'center',
-    paddingVertical: layout.spacing.md,
+    paddingVertical: 16,
     gap: 6,
   },
   errorTitle: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.error,
+    fontSize: 16,
+    fontWeight: '700',
   },
   errorSub: {
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
+    fontSize: 12,
     textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: layout.spacing.md,
+    marginTop: 16,
   },
   footerText: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 12,
   },
 });

@@ -1,6 +1,41 @@
 import React from 'react';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { StyleProp, TextStyle } from 'react-native';
+import { StyleProp, ViewStyle } from 'react-native';
+import {
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  RefreshCw,
+  ShieldCheck,
+  Copy,
+  ExternalLink,
+  User,
+  Phone,
+  CreditCard,
+  Lock,
+  DollarSign,
+  HelpCircle,
+  Check,
+  X,
+  Zap,
+  Shield,
+  AlertTriangle,
+  Activity,
+  Layers,
+  FileText,
+  Building2,
+  Bell,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Settings,
+  Plus,
+  QrCode,
+  Smartphone,
+  Eye,
+  Filter,
+} from 'lucide-react-native';
 
 export type IconName =
   | 'check-circle'
@@ -24,61 +59,98 @@ export type IconName =
   | 'alert'
   | 'activity'
   | 'layers'
-  | 'file-text';
+  | 'file-text'
+  | 'building'
+  | 'bell'
+  | 'search'
+  | 'chevron-left'
+  | 'chevron-right'
+  | 'trending-up'
+  | 'settings'
+  | 'plus'
+  | 'qr-code'
+  | 'smartphone'
+  | 'eye'
+  | 'filter';
 
 export interface IconProps {
   name: IconName;
   size?: number;
   color?: string;
-  style?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Icon({ name, size = 20, color = '#F8FAFC', style }: IconProps) {
   switch (name) {
     case 'shield-check':
-      return <Ionicons name="shield-checkmark" size={size} color={color} style={style} />;
+      return <ShieldCheck size={size} color={color} style={style} />;
     case 'check-circle':
-      return <Feather name="check-circle" size={size} color={color} style={style} />;
+      return <CheckCircle2 size={size} color={color} style={style} />;
     case 'alert-circle':
+      return <AlertCircle size={size} color={color} style={style} />;
     case 'alert':
-      return <Feather name="alert-circle" size={size} color={color} style={style} />;
+      return <AlertTriangle size={size} color={color} style={style} />;
     case 'clock':
-      return <Feather name="clock" size={size} color={color} style={style} />;
+      return <Clock size={size} color={color} style={style} />;
     case 'arrow-right':
-      return <Feather name="arrow-right" size={size} color={color} style={style} />;
+      return <ArrowRight size={size} color={color} style={style} />;
     case 'refresh-cw':
-      return <Feather name="refresh-cw" size={size} color={color} style={style} />;
+      return <RefreshCw size={size} color={color} style={style} />;
     case 'copy':
-      return <Feather name="copy" size={size} color={color} style={style} />;
+      return <Copy size={size} color={color} style={style} />;
     case 'external-link':
-      return <Feather name="external-link" size={size} color={color} style={style} />;
+      return <ExternalLink size={size} color={color} style={style} />;
     case 'user':
-      return <Feather name="user" size={size} color={color} style={style} />;
+      return <User size={size} color={color} style={style} />;
     case 'phone':
-      return <Feather name="phone" size={size} color={color} style={style} />;
+      return <Phone size={size} color={color} style={style} />;
     case 'credit-card':
-      return <Feather name="credit-card" size={size} color={color} style={style} />;
+      return <CreditCard size={size} color={color} style={style} />;
     case 'lock':
-      return <Feather name="lock" size={size} color={color} style={style} />;
+      return <Lock size={size} color={color} style={style} />;
     case 'dollar-sign':
-      return <Feather name="dollar-sign" size={size} color={color} style={style} />;
+      return <DollarSign size={size} color={color} style={style} />;
     case 'help-circle':
-      return <Feather name="help-circle" size={size} color={color} style={style} />;
+      return <HelpCircle size={size} color={color} style={style} />;
     case 'check':
-      return <Feather name="check" size={size} color={color} style={style} />;
+      return <Check size={size} color={color} style={style} />;
     case 'x':
-      return <Feather name="x" size={size} color={color} style={style} />;
+      return <X size={size} color={color} style={style} />;
     case 'zap':
-      return <Feather name="zap" size={size} color={color} style={style} />;
+      return <Zap size={size} color={color} style={style} />;
     case 'shield':
-      return <Feather name="shield" size={size} color={color} style={style} />;
+      return <Shield size={size} color={color} style={style} />;
     case 'activity':
-      return <Feather name="activity" size={size} color={color} style={style} />;
+      return <Activity size={size} color={color} style={style} />;
     case 'layers':
-      return <Feather name="layers" size={size} color={color} style={style} />;
+      return <Layers size={size} color={color} style={style} />;
     case 'file-text':
-      return <Feather name="file-text" size={size} color={color} style={style} />;
+      return <FileText size={size} color={color} style={style} />;
+    case 'building':
+      return <Building2 size={size} color={color} style={style} />;
+    case 'bell':
+      return <Bell size={size} color={color} style={style} />;
+    case 'search':
+      return <Search size={size} color={color} style={style} />;
+    case 'chevron-left':
+      return <ChevronLeft size={size} color={color} style={style} />;
+    case 'chevron-right':
+      return <ChevronRight size={size} color={color} style={style} />;
+    case 'trending-up':
+      return <TrendingUp size={size} color={color} style={style} />;
+    case 'settings':
+      return <Settings size={size} color={color} style={style} />;
+    case 'plus':
+      return <Plus size={size} color={color} style={style} />;
+    case 'qr-code':
+      return <QrCode size={size} color={color} style={style} />;
+    case 'smartphone':
+      return <Smartphone size={size} color={color} style={style} />;
+    case 'eye':
+      return <Eye size={size} color={color} style={style} />;
+    case 'filter':
+      return <Filter size={size} color={color} style={style} />;
     default:
-      return <Feather name="help-circle" size={size} color={color} style={style} />;
+      return <HelpCircle size={size} color={color} style={style} />;
   }
 }

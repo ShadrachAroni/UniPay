@@ -70,7 +70,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
     this.secretKey =
       options.secretKey ||
       process.env.LOOP_SECRET_KEY ||
-      'hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8';
+      'mock_loop_secret_key';
     this.callBackUrl =
       options.callBackUrl ||
       process.env.LOOP_CALLBACK_URL ||

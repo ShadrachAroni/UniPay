@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TextInput, Modal } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { View, Text, StyleSheet, ScrollView, Switch, TextInput, Modal, TouchableOpacity } from 'react-native';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Chip } from '../../components/ui/Chip';
+import { X, CreditCard, RefreshCw, Sliders, ShieldCheck } from 'lucide-react-native';
 
 interface RailItem {
   id: string;
@@ -25,6 +26,7 @@ interface RailItem {
 }
 
 export default function AdminRailsScreen() {
+  const { tokens, isDark, activeColors } = useTheme();
   const [rails, setRails] = useState<RailItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRail, setEditingRail] = useState<RailItem | null>(null);
@@ -43,7 +45,6 @@ export default function AdminRailsScreen() {
         setRails(data.rails || []);
       }
     } catch {
-      // Demo fallback
       setRails([
         {
           id: 'r-1',
@@ -118,79 +119,107 @@ export default function AdminRailsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerRow}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: activeColors.background }}
+      contentContainerStyle={{ padding: tokens.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' }}
+    >
+      <View className="flex-row justify-between items-center mb-6 flex-wrap gap-4">
         <View>
-          <Text style={styles.pageTitle}>Payment Rails & Gateway Configuration</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+            Payment Rails & Gateway Configuration
+          </Text>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
             Rails as configuration (§9b) — toggle availability and adjust dynamic fee routing
           </Text>
         </View>
-        <Button title="Reload Rails" size="sm" variant="secondary" icon="zap" onPress={fetchRails} />
+        <Button title="Reload Rails" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchRails} />
       </View>
 
-      <View style={styles.grid}>
+      <View className="gap-4">
         {loading ? (
           <>
-            <Skeleton width="100%" height={120} style={{ marginBottom: 12 }} />
+            <Skeleton width="100%" height={120} />
             <Skeleton width="100%" height={120} />
           </>
         ) : (
           rails.map((rail) => (
-            <Card key={rail.adapter_key} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.railName}>{rail.name}</Text>
-                  <Text style={styles.railKey}>Adapter: {rail.adapter_key}</Text>
+            <Card key={rail.adapter_key}>
+              <View className="flex-row justify-between items-center">
+                <View className="flex-row items-center">
+                  <View
+                    className="w-10 h-10 rounded-xl items-center justify-center mr-3"
+                    style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff' }}
+                  >
+                    <CreditCard size={20} color={activeColors.brand} />
+                  </View>
+                  <View>
+                    <Text className="font-bold text-base" style={{ color: activeColors.text.primary }}>
+                      {rail.name}
+                    </Text>
+                    <Text className="font-mono text-xs mt-0.5" style={{ color: activeColors.text.muted }}>
+                      Adapter: {rail.adapter_key}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.switchRow}>
-                  <Text style={[styles.switchLabel, rail.is_enabled && { color: colors.verified }]}>
-                    {rail.is_enabled ? 'ENABLED' : 'DISABLED'}
-                  </Text>
+
+                <View className="flex-row items-center gap-3">
+                  <Chip
+                    label={rail.is_enabled ? 'ENABLED' : 'DISABLED'}
+                    variant={rail.is_enabled ? 'success' : 'default'}
+                    size="sm"
+                  />
                   <Switch
                     value={rail.is_enabled}
                     onValueChange={(val) => handleToggleRail(rail, val)}
-                    trackColor={{ false: colors.bgInput, true: colors.brand }}
+                    trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: activeColors.brand }}
                     thumbColor="#FFFFFF"
                   />
                 </View>
               </View>
 
-              <View style={styles.divider} />
+              <View className="h-px my-4" style={{ backgroundColor: activeColors.border }} />
 
-              <View style={styles.cardBody}>
-                <View style={styles.configCol}>
-                  <Text style={styles.configLabel}>Fee Structure</Text>
-                  <Text style={styles.configValue}>
+              <View className="flex-row justify-between items-center flex-wrap gap-4">
+                <View className="min-w-[100px]">
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                    Fee Structure
+                  </Text>
+                  <Text className="font-semibold text-sm mt-0.5" style={{ color: activeColors.text.primary }}>
                     {((rail.capabilities_json.feeStructure?.percentage || 0) * 100).toFixed(2)}%
                   </Text>
                 </View>
-                <View style={styles.configCol}>
-                  <Text style={styles.configLabel}>Limits (KES)</Text>
-                  <Text style={styles.configValue}>
+
+                <View className="min-w-[120px]">
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                    Limits (KES)
+                  </Text>
+                  <Text className="font-semibold text-sm mt-0.5" style={{ color: activeColors.text.primary }}>
                     {rail.min_amount} – {rail.max_amount.toLocaleString()}
                   </Text>
                 </View>
-                <View style={styles.configCol}>
-                  <Text style={styles.configLabel}>Circuit Breaker</Text>
-                  <Text style={[styles.configValue, { color: colors.verified }]}>
+
+                <View className="min-w-[100px]">
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                    Circuit Breaker
+                  </Text>
+                  <Text className="font-semibold text-sm mt-0.5" style={{ color: tokens.colors.semantic.success }}>
                     {rail.health?.circuit_breaker_state || 'CLOSED'}
                   </Text>
                 </View>
-                <View style={styles.actionCol}>
-                  <Button
-                    title="Edit Fees"
-                    size="sm"
-                    variant="outline"
-                    onPress={() => {
-                      setEditingRail(rail);
-                      setEditFeePercentage(
-                        String((rail.capabilities_json.feeStructure?.percentage || 0) * 100)
-                      );
-                      setEditModalVisible(true);
-                    }}
-                  />
-                </View>
+
+                <Button
+                  title="Edit Fees"
+                  size="sm"
+                  variant="outline"
+                  onPress={() => {
+                    setEditingRail(rail);
+                    setEditFeePercentage(
+                      String((rail.capabilities_json.feeStructure?.percentage || 0) * 100)
+                    );
+                    setEditModalVisible(true);
+                  }}
+                />
               </View>
             </Card>
           ))
@@ -199,34 +228,52 @@ export default function AdminRailsScreen() {
 
       {/* Edit Config Modal */}
       <Modal visible={editModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Update Rail Configuration</Text>
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 460 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                Update Rail Configuration
+              </Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
+              </TouchableOpacity>
             </View>
+
             {editingRail && (
-              <View style={{ gap: 12 }}>
-                <Text style={styles.modalSub}>{editingRail.name}</Text>
+              <View className="gap-3">
+                <Text className="font-semibold text-sm" style={{ color: activeColors.brand }}>
+                  {editingRail.name}
+                </Text>
                 <View>
-                  <Text style={styles.inputLabel}>Percentage Fee (%)</Text>
+                  <Text className="text-xs font-semibold mb-1" style={{ color: activeColors.text.secondary }}>
+                    Percentage Fee (%)
+                  </Text>
                   <TextInput
-                    style={styles.input}
+                    className="p-3 rounded-xl border font-medium text-sm"
+                    style={{
+                      backgroundColor: activeColors.input,
+                      borderColor: activeColors.border,
+                      color: activeColors.text.primary,
+                    }}
                     value={editFeePercentage}
                     onChangeText={setEditFeePercentage}
                     keyboardType="numeric"
                   />
                 </View>
-                <View style={styles.modalButtons}>
+
+                <View className="flex-row gap-2 mt-3">
                   <Button
                     title="Save Config"
                     variant="primary"
                     loading={actionLoading}
                     onPress={handleSaveConfig}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Cancel"
                     variant="secondary"
                     onPress={() => setEditModalVisible(false)}
+                    style={{ flex: 1 }}
                   />
                 </View>
               </View>
@@ -237,32 +284,3 @@ export default function AdminRailsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  contentContainer: { padding: layout.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  pageTitle: { color: colors.textPrimary, fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold },
-  pageSubtitle: { color: colors.textSecondary, fontSize: typography.sizes.sm, marginTop: 4 },
-  grid: { gap: 16 },
-  card: { padding: layout.spacing.md },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  railName: { color: colors.textPrimary, fontSize: typography.sizes.base, fontWeight: typography.weights.bold },
-  railKey: { color: colors.textMuted, fontSize: typography.sizes.xs, fontFamily: typography.fontMono, marginTop: 2 },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  switchLabel: { fontSize: 10, fontWeight: typography.weights.bold, color: colors.textSecondary },
-  divider: { height: 1, backgroundColor: colors.borderSubtle, marginVertical: 12 },
-  cardBody: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
-  configCol: { minWidth: 100 },
-  configLabel: { color: colors.textSecondary, fontSize: typography.sizes.xs },
-  configValue: { color: colors.textPrimary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: 2 },
-  actionCol: { alignItems: 'flex-end' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalCard: { width: '100%', maxWidth: 450, backgroundColor: colors.bgCard },
-  modalHeader: { marginBottom: 12 },
-  modalTitle: { color: colors.textPrimary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  modalSub: { color: colors.brandLight, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  inputLabel: { color: colors.textSecondary, fontSize: typography.sizes.xs, marginBottom: 4 },
-  input: { backgroundColor: colors.bgInput, borderColor: colors.border, borderWidth: 1, borderRadius: layout.borderRadius.md, padding: 10, color: colors.textPrimary },
-  modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },
-});

@@ -7,8 +7,8 @@ describe('Real LOOP Sandbox Integration Gate', () => {
   const SANDBOX_BASE_URL = 'https://sandbox.loop.co.ke';
   const SANDBOX_CLIENT_ID = process.env.LOOP_CLIENT_ID || 'sandbox_client_id';
   const SANDBOX_CLIENT_SECRET = process.env.LOOP_CLIENT_SECRET || 'sandbox_client_secret';
-  const SANDBOX_MERCHANT_TILL = '133239';
-  const SANDBOX_SECRET_KEY = 'hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8';
+  const SANDBOX_MERCHANT_TILL = process.env.LOOP_MERCHANT_TILL || '133239';
+  const SANDBOX_SECRET_KEY = process.env.LOOP_SECRET_KEY || 'mock_sandbox_secret';
 
   it('attempts OAuth token acquisition and real LOOP Prompt sandbox invocation', async () => {
     const authClient = new LoopAuthClient({

@@ -291,7 +291,7 @@ describe('Phase 9 Verification Test Suite — Hardening, Observability & Securit
   // =========================================================================
   describe('4. §19 Security Checklist End-to-End Re-Verification', () => {
     it('verifies Webhook signature verification and duplicate replay rejection', async () => {
-      const secretKey = 'hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8';
+      const secretKey = process.env.LOOP_SECRET_KEY || 'test_loop_secret_mock_key';
       const merchantTill = '133239';
       const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
       const nonce = 'replay-nonce-test-12345';

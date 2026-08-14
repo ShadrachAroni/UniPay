@@ -8,7 +8,7 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Icon, IconName } from './Icon';
 
 export interface InputProps extends TextInputProps {
@@ -19,6 +19,7 @@ export interface InputProps extends TextInputProps {
   helperText?: string;
   icon?: IconName;
   containerStyle?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 export function Input({
@@ -30,34 +31,70 @@ export function Input({
   icon,
   containerStyle,
   style,
+  className,
   ...props
 }: InputProps) {
+  const { tokens, isDark } = useTheme();
+  const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={[styles.container, containerStyle]} className={className}>
+      {label && (
+        <Text
+          style={[
+            styles.label,
+            {
+              color: activeColors.text.secondary,
+              fontSize: tokens.typography.size.xs,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+      )}
 
       <View
         style={[
           styles.inputContainer,
-          isFocused && styles.focused,
-          !!error && styles.errorBorder,
+          {
+            backgroundColor: activeColors.input,
+            borderColor: error ? tokens.colors.semantic.error : isFocused ? activeColors.borderFocus : activeColors.border,
+            borderRadius: tokens.borderRadius.md,
+          },
         ]}
       >
         {icon && (
           <Icon
             name={icon}
             size={18}
-            color={isFocused ? colors.brandLight : colors.textMuted}
+            color={isFocused ? activeColors.brand : activeColors.text.muted}
             style={{ marginRight: 8 }}
           />
         )}
-        {prefix && <Text style={styles.prefix}>{prefix}</Text>}
+        {prefix && (
+          <Text
+            style={{
+              fontSize: tokens.typography.size.base,
+              fontWeight: '600',
+              color: activeColors.brand,
+              marginRight: 6,
+            }}
+          >
+            {prefix}
+          </Text>
+        )}
 
         <TextInput
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, style]}
+          placeholderTextColor={activeColors.text.muted}
+          style={[
+            styles.input,
+            {
+              color: activeColors.text.primary,
+              fontSize: tokens.typography.size.base,
+            },
+            style,
+          ]}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);
@@ -69,13 +106,23 @@ export function Input({
           {...props}
         />
 
-        {suffix && <Text style={styles.suffix}>{suffix}</Text>}
+        {suffix && (
+          <Text
+            style={{
+              fontSize: tokens.typography.size.sm,
+              color: activeColors.text.muted,
+              marginLeft: 6,
+            }}
+          >
+            {suffix}
+          </Text>
+        )}
       </View>
 
       {error ? (
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: tokens.colors.semantic.error }]}>{error}</Text>
       ) : helperText ? (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={[styles.helperText, { color: activeColors.text.muted }]}>{helperText}</Text>
       ) : null}
     </View>
   );
@@ -83,12 +130,10 @@ export function Input({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: layout.spacing.sm,
+    marginBottom: 12,
   },
   label: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: colors.textSecondary,
+    fontWeight: '600',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -96,48 +141,24 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgInput,
-    borderRadius: layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: 12,
     height: 48,
   },
-  focused: {
-    borderColor: colors.borderFocus,
-    backgroundColor: '#1E293B',
-  },
-  errorBorder: {
-    borderColor: colors.error,
-  },
-  prefix: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-    color: colors.brandLight,
-    marginRight: 6,
-  },
-  suffix: {
-    fontSize: typography.sizes.sm,
-    color: colors.textMuted,
-    marginLeft: 6,
-  },
   input: {
     flex: 1,
-    color: colors.textPrimary,
-    fontSize: typography.sizes.base,
     height: '100%',
     padding: 0,
   },
   helperText: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 11,
     marginTop: 4,
     marginLeft: 2,
   },
   errorText: {
-    fontSize: typography.sizes.xs,
-    color: colors.error,
+    fontSize: 11,
     marginTop: 4,
     marginLeft: 2,
+    fontWeight: '500',
   },
 });

@@ -69,7 +69,7 @@ export class LoopApiClient {
   constructor(config: LoopApiClientConfig) {
     this.baseUrl = config.baseUrl || process.env.LOOP_BASE_URL || 'https://sandbox.loop.co.ke';
     this.merchantTill = config.merchantTill || process.env.LOOP_MERCHANT_TILL || '133239';
-    this.secretKey = config.secretKey || process.env.LOOP_SECRET_KEY || 'hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8';
+    this.secretKey = config.secretKey || process.env.LOOP_SECRET_KEY || 'mock_loop_secret_key';
     this.defaultCallBackUrl = config.callBackUrl || process.env.LOOP_CALLBACK_URL || 'https://sandbox.unipay.co.ke/api/v1/webhooks/loop';
     this.authClient = config.authClient;
   }

@@ -15,7 +15,7 @@ describe('LoopAdapter Unit Tests', () => {
 
     mockApiClient = new LoopApiClient({
       merchantTill: '133239',
-      secretKey: 'hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8',
+      secretKey: process.env.LOOP_SECRET_KEY || 'test_loop_secret_key',
       authClient,
     });
 

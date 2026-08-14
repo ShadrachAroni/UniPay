@@ -56,9 +56,12 @@
     "typescript": "^5.7.3"
   },
   "optionalDependencies": {
-    "lightningcss-linux-x64-gnu": "1.27.0",
-    "lightningcss-win32-x64-msvc": "1.27.0",
+    "lightningcss-darwin-arm64": "1.27.0",
     "lightningcss-darwin-x64": "1.27.0",
-    "lightningcss-darwin-arm64": "1.27.0"
+    "lightningcss-linux-x64-gnu": "1.27.0",
+    "lightningcss-win32-x64-msvc": "1.27.0"
+  },
+  "dependencies": {
+    "vitest": "^4.1.10"
   }
 }

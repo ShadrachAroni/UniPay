@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Chip } from '../../components/ui/Chip';
 import { ReconciliationException } from '@unipay/shared';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  X,
+  ArrowRight,
+  Sliders,
+} from 'lucide-react-native';
 
 export default function AdminExceptionsScreen() {
+  const { tokens, isDark, activeColors } = useTheme();
   const [exceptions, setExceptions] = useState<ReconciliationException[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -29,7 +38,6 @@ export default function AdminExceptionsScreen() {
         const data = await res.json();
         setExceptions(data.exceptions || []);
       } else {
-        // Fallback demo exceptions
         setExceptions([
           {
             id: 'ex-201',
@@ -98,20 +106,26 @@ export default function AdminExceptionsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerRow}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: activeColors.background }}
+      contentContainerStyle={{ padding: tokens.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' }}
+    >
+      <View className="flex-row justify-between items-center mb-6 flex-wrap gap-4">
         <View>
-          <Text style={styles.pageTitle}>Transaction & Exception Oversight</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+            Transaction & Exception Oversight
+          </Text>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
             System-wide reconciliation exceptions queue across all 7 categories
           </Text>
         </View>
-        <Button title="Refresh Queue" size="sm" variant="secondary" icon="zap" onPress={fetchExceptions} />
+        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchExceptions} />
       </View>
 
       {/* Category Filter Pills */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-        <View style={styles.pillGroup}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+        <View className="flex-row gap-2">
           {[
             'all',
             'amount_mismatch',
@@ -121,60 +135,69 @@ export default function AdminExceptionsScreen() {
             'overpayment',
             'settlement_delay',
           ].map((cat) => (
-            <TouchableOpacity
+            <Chip
               key={cat}
-              style={[styles.pill, categoryFilter === cat && styles.pillActive]}
+              label={cat.replace(/_/g, ' ')}
+              selected={categoryFilter === cat}
               onPress={() => setCategoryFilter(cat)}
-            >
-              <Text style={[styles.pillText, categoryFilter === cat && styles.pillTextActive]}>
-                {cat.replace(/_/g, ' ').toUpperCase()}
-              </Text>
-            </TouchableOpacity>
+              size="sm"
+            />
           ))}
         </View>
       </ScrollView>
 
       {/* Exceptions Table */}
-      <Card style={styles.tableCard}>
+      <Card style={{ padding: 0 }}>
         {loading ? (
-          <View style={{ gap: 12 }}>
-            <Skeleton width="100%" height={40} />
-            <Skeleton width="100%" height={40} />
+          <View className="p-4 gap-3">
+            <Skeleton width="100%" height={50} />
+            <Skeleton width="100%" height={50} />
           </View>
         ) : exceptions.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="check" size={32} color={colors.verified} />
-            <Text style={styles.emptyText}>No exceptions in queue</Text>
+          <View className="p-12 items-center justify-center">
+            <CheckCircle2 size={36} color={tokens.colors.semantic.success} />
+            <Text className="mt-2 text-sm" style={{ color: activeColors.text.muted }}>
+              No exceptions in queue
+            </Text>
           </View>
         ) : (
-          exceptions.map((ex) => (
-            <View key={ex.id} style={styles.tableRow}>
-              <View style={styles.exceptionCol}>
-                <View style={styles.categoryRow}>
-                  <Text style={styles.categoryTitle}>{ex.category.replace(/_/g, ' ').toUpperCase()}</Text>
-                  <View style={[styles.badge, ex.status === 'open' ? styles.badgeOpen : styles.badgeResolved]}>
-                    <Text style={styles.badgeText}>{ex.status.toUpperCase()}</Text>
-                  </View>
+          exceptions.map((ex, index) => (
+            <View
+              key={ex.id}
+              className="flex-row justify-between items-center p-4 border-b flex-wrap gap-4"
+              style={{
+                borderColor: activeColors.border,
+                backgroundColor: index % 2 === 0 ? activeColors.surface : activeColors.surfaceSubtle,
+              }}
+            >
+              <View className="flex-1 min-w-[260px] gap-1.5">
+                <View className="flex-row items-center gap-2">
+                  <Text className="font-bold text-sm" style={{ color: activeColors.text.primary }}>
+                    {ex.category.replace(/_/g, ' ').toUpperCase()}
+                  </Text>
+                  <Chip
+                    label={ex.status}
+                    variant={ex.status === 'open' ? 'warning' : 'success'}
+                    size="sm"
+                  />
                 </View>
-                <Text style={styles.detailsText}>
+                <Text className="font-mono text-xs" style={{ color: activeColors.text.secondary }}>
                   Details: {JSON.stringify(ex.details)}
                 </Text>
-                <Text style={styles.subText}>
+                <Text className="text-xs" style={{ color: activeColors.text.muted }}>
                   TX ID: {ex.transaction_id || 'None'} · Profile: {ex.profile_id}
                 </Text>
               </View>
 
-              <View style={styles.actionCol}>
-                <Button
-                  title="Intervene"
-                  size="sm"
-                  variant="outline"
-                  onPress={() => {
-                    setSelectedException(ex);
-                    setActionModalVisible(true);
-                  }}
-                />
-              </View>
+              <Button
+                title="Intervene"
+                size="sm"
+                variant="outline"
+                onPress={() => {
+                  setSelectedException(ex);
+                  setActionModalVisible(true);
+                }}
+              />
             </View>
           ))
         )}
@@ -182,45 +205,56 @@ export default function AdminExceptionsScreen() {
 
       {/* Action Modal */}
       <Modal visible={actionModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Exception Intervention</Text>
-              <TouchableOpacity onPress={() => setActionModalVisible(false)}>
-                <Icon name="alert" size={18} color={colors.textSecondary} />
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 500 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                Exception Intervention
+              </Text>
+              <TouchableOpacity onPress={() => setActionModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             {selectedException && (
-              <View style={{ gap: 12 }}>
-                <Text style={styles.modalSub}>
+              <View className="gap-3">
+                <Text className="font-semibold text-sm" style={{ color: activeColors.brand }}>
                   Category: {selectedException.category.replace(/_/g, ' ')}
                 </Text>
-                <Text style={styles.detailsText}>
+                <Text className="font-mono text-xs p-3 rounded-lg border" style={{ backgroundColor: activeColors.surfaceSubtle, borderColor: activeColors.border, color: activeColors.text.primary }}>
                   {JSON.stringify(selectedException.details, null, 2)}
                 </Text>
 
                 <TextInput
-                  style={styles.noteInput}
+                  className="p-3 rounded-xl border text-sm"
+                  style={{
+                    backgroundColor: activeColors.input,
+                    borderColor: activeColors.border,
+                    color: activeColors.text.primary,
+                    minHeight: 80,
+                    textAlignVertical: 'top',
+                  }}
                   placeholder="Enter resolution or escalation notes..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={activeColors.text.muted}
                   value={actionNotes}
                   onChangeText={setActionNotes}
                   multiline
                 />
 
-                <View style={styles.modalActions}>
+                <View className="flex-row gap-2 mt-3 flex-wrap">
                   <Button
                     title="Mark Resolved"
-                    variant="primary"
+                    variant="success"
                     loading={actionLoading}
                     onPress={() => handleAction('resolve')}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Escalate to Support"
                     variant="secondary"
                     loading={actionLoading}
                     onPress={() => handleAction('escalate')}
+                    style={{ flex: 1 }}
                   />
                 </View>
               </View>
@@ -231,37 +265,3 @@ export default function AdminExceptionsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  contentContainer: { padding: layout.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  pageTitle: { color: colors.textPrimary, fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold },
-  pageSubtitle: { color: colors.textSecondary, fontSize: typography.sizes.sm, marginTop: 4 },
-  pillGroup: { flexDirection: 'row', gap: 8 },
-  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: layout.borderRadius.full, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border },
-  pillActive: { backgroundColor: colors.brandGlow, borderColor: colors.brandLight },
-  pillText: { color: colors.textSecondary, fontSize: 11, fontWeight: typography.weights.semibold },
-  pillTextActive: { color: colors.brandLight },
-  tableCard: { padding: 0 },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: layout.spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  exceptionCol: { flex: 1, gap: 4 },
-  categoryRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  categoryTitle: { color: colors.textPrimary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  detailsText: { color: colors.textSecondary, fontSize: typography.sizes.xs, fontFamily: typography.fontMono },
-  subText: { color: colors.textMuted, fontSize: typography.sizes.xs },
-  badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: layout.borderRadius.sm },
-  badgeOpen: { backgroundColor: colors.warningBg },
-  badgeResolved: { backgroundColor: colors.verifiedBg },
-  badgeText: { fontSize: 10, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  actionCol: { marginLeft: 12 },
-  emptyState: { padding: 32, alignItems: 'center', gap: 8 },
-  emptyText: { color: colors.textMuted, fontSize: typography.sizes.sm },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalCard: { width: '100%', maxWidth: 500, backgroundColor: colors.bgCard },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { color: colors.textPrimary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  modalSub: { color: colors.brandLight, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  noteInput: { backgroundColor: colors.bgInput, borderColor: colors.border, borderWidth: 1, borderRadius: layout.borderRadius.md, padding: 12, color: colors.textPrimary, minHeight: 80, textAlignVertical: 'top' },
-  modalActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
-});

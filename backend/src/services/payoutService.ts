@@ -79,6 +79,10 @@ export async function calculateProfileBalance(
     }
   } catch {
     // In-memory fallback
+  }
+
+  // Fallback to in-memory transactions if DB returned 0
+  if (totalSettled === 0) {
     const transactions = await listTransactions({
       profile_id: profileId,
       settlement_status: 'settled',
@@ -106,6 +110,10 @@ export async function calculateProfileBalance(
     }
   } catch {
     // In-memory fallback
+  }
+
+  // Fallback to in-memory payouts if DB returned 0
+  if (totalPayouts === 0 && inMemoryPayouts.size > 0) {
     for (const p of inMemoryPayouts.values()) {
       if (p.profile_id === profileId) {
         if (p.status === 'requested' || p.status === 'processing' || p.status === 'completed') {

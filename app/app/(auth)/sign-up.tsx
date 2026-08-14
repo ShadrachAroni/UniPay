@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../theme/ThemeProvider';
+import { ThemeToggle } from '../../theme/ThemeToggle';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { Header } from '../../components/ui/Header';
+import { ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const router = useRouter();
+  const { tokens, isDark, activeColors } = useTheme();
 
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
@@ -54,88 +62,133 @@ export default function SignUpScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-slate-900 px-6 py-12">
-      <View className="max-w-md mx-auto w-full">
-        <Text className="text-2xl font-bold text-white mb-2">Create an Account</Text>
-        <Text className="text-slate-400 text-sm mb-6">
-          One unified identity for payments across Kenya
-        </Text>
+    <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
+      <Header title="Sign Up" showBack onBack={() => router.replace('/')} />
 
-        {errorMsg && (
-          <View className="bg-rose-950/60 border border-rose-800 p-3 rounded-lg mb-4">
-            <Text className="text-rose-400 text-xs">{errorMsg}</Text>
-          </View>
-        )}
-
-        {!pendingVerification ? (
-          <View className="space-y-4">
-            <View>
-              <Text className="text-slate-300 text-xs font-semibold mb-1">Email</Text>
-              <TextInput
-                autoCapitalize="none"
-                value={emailAddress}
-                placeholder="name@example.com"
-                placeholderTextColor="#64748B"
-                onChangeText={setEmailAddress}
-                className="bg-slate-800 border border-slate-700 text-white rounded-lg p-3 text-sm"
-              />
-            </View>
-
-            <View className="mt-3">
-              <Text className="text-slate-300 text-xs font-semibold mb-1">Password</Text>
-              <TextInput
-                value={password}
-                placeholder="Choose secure password"
-                placeholderTextColor="#64748B"
-                secureTextEntry
-                onChangeText={setPassword}
-                className="bg-slate-800 border border-slate-700 text-white rounded-lg p-3 text-sm"
-              />
-            </View>
-
-            <TouchableOpacity
-              onPress={onSignUpPress}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-500 py-3 rounded-lg items-center mt-6"
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: tokens.spacing.lg,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="w-full max-w-md">
+          {/* Logo & Header */}
+          <View className="items-center mb-6">
+            <View
+              className="w-12 h-12 rounded-2xl items-center justify-center mb-3"
+              style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe' }}
             >
-              <Text className="text-white font-bold text-sm">
-                {loading ? 'Creating Account...' : 'Continue'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push('/(auth)/sign-in')}
-              className="py-3 items-center mt-2"
-            >
-              <Text className="text-slate-400 text-xs">
-                Already registered? <Text className="text-blue-400 font-semibold">Sign In</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View className="space-y-4">
-            <Text className="text-slate-300 text-xs font-semibold mb-1">
-              Enter Verification Code sent to {emailAddress}
+              <ShieldCheck size={28} color={activeColors.brand} />
+            </View>
+            <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+              Create an Account
             </Text>
-            <TextInput
-              value={code}
-              placeholder="123456"
-              placeholderTextColor="#64748B"
-              onChangeText={setCode}
-              className="bg-slate-800 border border-slate-700 text-white rounded-lg p-3 text-sm text-center tracking-widest font-mono text-lg"
-            />
-            <TouchableOpacity
-              onPress={onPressVerify}
-              disabled={loading}
-              className="bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg items-center mt-6"
-            >
-              <Text className="text-white font-bold text-sm">
-                {loading ? 'Verifying...' : 'Verify & Continue'}
-              </Text>
-            </TouchableOpacity>
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
+              One unified identity for payments across Kenya
+            </Text>
           </View>
-        )}
-      </View>
-    </ScrollView>
+
+          {/* Theme Switcher */}
+          <View className="mb-6">
+            <ThemeToggle />
+          </View>
+
+          <Card variant="elevated">
+            {errorMsg && (
+              <View
+                className="p-3.5 rounded-xl mb-4 flex-row items-center border"
+                style={{
+                  backgroundColor: tokens.colors.semantic.errorBg,
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#fca5a5',
+                }}
+              >
+                <AlertCircle size={16} color={tokens.colors.semantic.error} />
+                <Text className="ml-2 font-medium flex-1 text-xs" style={{ color: tokens.colors.semantic.error }}>
+                  {errorMsg}
+                </Text>
+              </View>
+            )}
+
+            {!pendingVerification ? (
+              <View className="gap-3">
+                <Input
+                  label="Email Address"
+                  autoCapitalize="none"
+                  value={emailAddress}
+                  placeholder="name@example.com"
+                  keyboardType="email-address"
+                  onChangeText={setEmailAddress}
+                  icon="user"
+                />
+
+                <Input
+                  label="Password"
+                  value={password}
+                  placeholder="Choose a secure password"
+                  secureTextEntry
+                  onChangeText={setPassword}
+                  icon="lock"
+                />
+
+                <Button
+                  title={loading ? 'Creating Account...' : 'Continue'}
+                  onPress={onSignUpPress}
+                  loading={loading}
+                  variant="primary"
+                  size="lg"
+                  icon="arrow-right"
+                  iconPosition="right"
+                  style={{ marginTop: 8 }}
+                />
+
+                <TouchableOpacity
+                  onPress={() => router.push('/(auth)/sign-in')}
+                  className="py-3 items-center mt-2"
+                >
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm }}>
+                    Already have an account?{' '}
+                    <Text className="font-bold" style={{ color: activeColors.brand }}>
+                      Sign In
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View className="gap-3">
+                <View className="items-center mb-2">
+                  <CheckCircle2 size={32} color={tokens.colors.semantic.success} />
+                  <Text className="font-bold text-base mt-2" style={{ color: activeColors.text.primary }}>
+                    Verification Code Sent
+                  </Text>
+                  <Text className="text-center text-xs mt-1" style={{ color: activeColors.text.secondary }}>
+                    We sent a 6-digit code to {emailAddress}
+                  </Text>
+                </View>
+
+                <Input
+                  value={code}
+                  placeholder="123456"
+                  keyboardType="numeric"
+                  onChangeText={setCode}
+                  style={{ textAlign: 'center', letterSpacing: 6, fontFamily: 'monospace', fontSize: 20 }}
+                />
+
+                <Button
+                  title={loading ? 'Verifying...' : 'Verify & Continue'}
+                  onPress={onPressVerify}
+                  loading={loading}
+                  variant="primary"
+                  size="lg"
+                  style={{ marginTop: 8 }}
+                />
+              </View>
+            )}
+          </Card>
+        </View>
+      </ScrollView>
+    </View>
   );
 }

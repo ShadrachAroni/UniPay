@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, ViewStyle, StyleProp } from 'react-native';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface SkeletonProps {
   width?: number | string;
@@ -14,19 +15,21 @@ export function Skeleton({
   height = 20,
   borderRadius = 6,
   style,
+  className,
 }: SkeletonProps) {
+  const { isDark } = useTheme();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
-          toValue: 0.8,
+          toValue: 0.75,
           duration: 750,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
-          toValue: 0.3,
+          toValue: 0.25,
           duration: 750,
           useNativeDriver: true,
         }),
@@ -37,14 +40,17 @@ export function Skeleton({
     return () => pulse.stop();
   }, [opacity]);
 
+  const baseBg = isDark ? '#334155' : '#cbd5e1';
+
   return (
     <Animated.View
+      className={className}
       style={[
         {
           width: width as any,
           height: height as any,
           borderRadius,
-          backgroundColor: '#334155',
+          backgroundColor: baseBg,
           opacity,
         },
         style,
@@ -76,7 +82,7 @@ export function FeeBreakdownSkeleton() {
         <Skeleton width="35%" height={14} />
         <Skeleton width="20%" height={14} />
       </View>
-      <View style={{ height: 1, backgroundColor: '#24334C', marginVertical: 4 }} />
+      <View style={{ height: 1, backgroundColor: '#334155', marginVertical: 4 }} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Skeleton width="50%" height={16} />
         <Skeleton width="30%" height={16} />

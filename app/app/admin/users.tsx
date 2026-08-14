@@ -1,14 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
 import { VerifiedBadge } from '../../components/ui/VerifiedBadge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Chip } from '../../components/ui/Chip';
+import { Avatar } from '../../components/ui/Avatar';
+import { SearchBar } from '../../components/ui/SearchBar';
 import { Profile } from '@unipay/shared';
+import {
+  Shield,
+  X,
+  FileText,
+  UserCheck,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  UserX,
+} from 'lucide-react-native';
 
 export default function AdminUsersScreen() {
+  const { tokens, isDark, activeColors } = useTheme();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -32,7 +45,6 @@ export default function AdminUsersScreen() {
         const data = await res.json();
         setUsers(data.users || []);
       } else {
-        // Mock profiles for preview/offline
         setUsers([
           {
             id: 'p-1001',
@@ -124,93 +136,104 @@ export default function AdminUsersScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerRow}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: activeColors.background }}
+      contentContainerStyle={{ padding: tokens.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' }}
+    >
+      <View className="flex-row items-center justify-between mb-6 flex-wrap gap-4">
         <View>
-          <Text style={styles.pageTitle}>User & Identity Management</Text>
-          <Text style={styles.pageSubtitle}>KYC verification queue, status lifecycle, and profile audits</Text>
+          <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+            User & Identity Management
+          </Text>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
+            KYC verification queue, status lifecycle, and profile audits
+          </Text>
         </View>
-        <Button title="Search / Filter" size="sm" variant="secondary" icon="zap" onPress={fetchUsers} />
+        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchUsers} />
       </View>
 
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
-        <View style={styles.searchBox}>
-          <Icon name="check" size={14} color={colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
+      {/* Filter Row */}
+      <View className="flex-row items-center justify-between gap-4 mb-6 flex-wrap">
+        <View className="flex-1 min-w-[260px]">
+          <SearchBar
             placeholder="Search by name, email, phone or ID..."
-            placeholderTextColor={colors.textMuted}
             value={search}
-            onChangeText={setSearch}
-            onSubmitEditing={fetchUsers}
+            onChangeText={(text) => {
+              setSearch(text);
+              fetchUsers();
+            }}
           />
         </View>
 
-        <View style={styles.pillGroup}>
+        <View className="flex-row gap-1.5 flex-wrap">
           {['all', 'submitted', 'approved', 'rejected', 'unsubmitted'].map((st) => (
-            <TouchableOpacity
+            <Chip
               key={st}
-              style={[styles.pill, statusFilter === st && styles.pillActive]}
+              label={st}
+              selected={statusFilter === st}
               onPress={() => setStatusFilter(st)}
-            >
-              <Text style={[styles.pillText, statusFilter === st && styles.pillTextActive]}>
-                {st.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
+              size="sm"
+            />
           ))}
         </View>
       </View>
 
       {/* Users Table */}
-      <Card style={styles.tableCard}>
+      <Card style={{ padding: 0 }}>
         {loading ? (
-          <View style={{ gap: 12 }}>
-            <Skeleton width="100%" height={40} />
-            <Skeleton width="100%" height={40} />
-            <Skeleton width="100%" height={40} />
+          <View className="p-4 gap-3">
+            <Skeleton width="100%" height={50} />
+            <Skeleton width="100%" height={50} />
+            <Skeleton width="100%" height={50} />
           </View>
         ) : users.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="shield" size={32} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No users matching filter criteria</Text>
+          <View className="p-12 items-center justify-center">
+            <Shield size={36} color={activeColors.text.muted} />
+            <Text className="mt-2 text-sm" style={{ color: activeColors.text.muted }}>
+              No users matching filter criteria
+            </Text>
           </View>
         ) : (
-          users.map((u) => (
-            <View key={u.id} style={styles.tableRow}>
-              <View style={styles.userCol}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.userName}>{u.display_name}</Text>
-                  {u.verification_status === 'approved' && <VerifiedBadge size="sm" />}
-                </View>
-                <Text style={styles.userSub}>
-                  {u.owner_name} · {u.account_type.toUpperCase()} · ID: {u.id_number || 'N/A'}
-                </Text>
-              </View>
-
-              <View style={styles.statusCol}>
-                <View
-                  style={[
-                    styles.badge,
-                    u.verification_status === 'approved' && styles.badgeSuccess,
-                    u.verification_status === 'submitted' && styles.badgeWarning,
-                    u.verification_status === 'rejected' && styles.badgeError,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.badgeText,
-                      u.verification_status === 'approved' && { color: colors.verified },
-                      u.verification_status === 'submitted' && { color: colors.warning },
-                      u.verification_status === 'rejected' && { color: colors.error },
-                    ]}
-                  >
-                    {u.verification_status.toUpperCase()}
+          users.map((u, index) => (
+            <View
+              key={u.id}
+              className="flex-row items-center justify-between p-4 flex-wrap gap-4 border-b"
+              style={{
+                borderColor: activeColors.border,
+                backgroundColor: index % 2 === 0 ? activeColors.surface : activeColors.surfaceSubtle,
+              }}
+            >
+              <View className="flex-row items-center flex-2 min-w-[240px]">
+                <Avatar name={u.display_name} id={u.id} size={40} />
+                <View className="ml-3">
+                  <View className="flex-row items-center gap-1.5">
+                    <Text className="font-semibold text-base" style={{ color: activeColors.text.primary }}>
+                      {u.display_name}
+                    </Text>
+                    {u.verification_status === 'approved' && <VerifiedBadge size="sm" />}
+                  </View>
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginTop: 2 }}>
+                    {u.owner_name} · {u.account_type.toUpperCase()} · ID: {u.id_number || 'N/A'}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.actionCol}>
+              <View className="flex-1 min-w-[120px]">
+                <Chip
+                  label={u.verification_status}
+                  variant={
+                    u.verification_status === 'approved'
+                      ? 'success'
+                      : u.verification_status === 'submitted'
+                      ? 'warning'
+                      : 'error'
+                  }
+                  size="sm"
+                />
+              </View>
+
+              <View className="flex-row gap-2">
                 <Button
                   title="Review KYC"
                   size="sm"
@@ -228,53 +251,75 @@ export default function AdminUsersScreen() {
 
       {/* KYC Review Modal */}
       <Modal visible={reviewModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>KYC Verification Review</Text>
-              <TouchableOpacity onPress={() => setReviewModalVisible(false)}>
-                <Icon name="alert" size={18} color={colors.textSecondary} />
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 540 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                KYC Verification Review
+              </Text>
+              <TouchableOpacity onPress={() => setReviewModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             {selectedUser && (
-              <View style={styles.modalBody}>
-                <Text style={styles.modalSubtitle}>Profile Details</Text>
-                <Text style={styles.detailRow}>Display Name: {selectedUser.display_name}</Text>
-                <Text style={styles.detailRow}>Owner Name: {selectedUser.owner_name}</Text>
-                <Text style={styles.detailRow}>ID Number: {selectedUser.id_number || 'Not provided'}</Text>
-                <Text style={styles.detailRow}>
-                  Document URL: {selectedUser.id_document_url || 'No document submitted'}
+              <View className="gap-3">
+                <Text className="font-semibold text-sm" style={{ color: activeColors.brand }}>
+                  Profile Information
+                </Text>
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Display Name: <Text className="font-bold">{selectedUser.display_name}</Text>
+                </Text>
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  Legal Owner: <Text className="font-bold">{selectedUser.owner_name}</Text>
+                </Text>
+                <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                  ID Number: <Text className="font-mono">{selectedUser.id_number || 'Not provided'}</Text>
+                </Text>
+                <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                  Document: {selectedUser.id_document_url || 'No document submitted'}
                 </Text>
 
-                <Text style={[styles.modalSubtitle, { marginTop: 16 }]}>Reviewer Decision & Notes</Text>
+                <Text className="font-semibold text-sm mt-3" style={{ color: activeColors.brand }}>
+                  Compliance Decision Notes
+                </Text>
                 <TextInput
-                  style={styles.noteInput}
+                  className="p-3 rounded-xl border text-sm"
+                  style={{
+                    backgroundColor: activeColors.input,
+                    borderColor: activeColors.border,
+                    color: activeColors.text.primary,
+                    minHeight: 80,
+                    textAlignVertical: 'top',
+                  }}
                   placeholder="Add compliance notes (e.g. verified against official registry)..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={activeColors.text.muted}
                   value={reviewerNote}
                   onChangeText={setReviewerNote}
                   multiline
                 />
 
-                <View style={styles.modalActionButtons}>
+                <View className="flex-row gap-2 mt-4 flex-wrap">
                   <Button
                     title="Approve KYC"
-                    variant="primary"
+                    variant="success"
                     loading={actionLoading}
                     onPress={() => handleReviewAction('approved')}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Reject KYC"
                     variant="danger"
                     loading={actionLoading}
                     onPress={() => handleReviewAction('rejected')}
+                    style={{ flex: 1 }}
                   />
                   <Button
                     title="Suspend Profile"
                     variant="secondary"
                     loading={actionLoading}
                     onPress={() => handleReviewAction('suspended')}
+                    style={{ flex: 1 }}
                   />
                 </View>
               </View>
@@ -285,208 +330,3 @@ export default function AdminUsersScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgDark,
-  },
-  contentContainer: {
-    padding: layout.spacing.lg,
-    maxWidth: 1200,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: layout.spacing.lg,
-    flexWrap: 'wrap',
-    gap: layout.spacing.md,
-  },
-  pageTitle: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-  },
-  pageSubtitle: {
-    color: colors.textSecondary,
-    fontSize: typography.sizes.sm,
-    marginTop: 4,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: layout.spacing.md,
-    marginBottom: layout.spacing.lg,
-    flexWrap: 'wrap',
-  },
-  searchBox: {
-    flex: 1,
-    minWidth: 260,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.bgInput,
-    borderRadius: layout.borderRadius.md,
-    paddingHorizontal: layout.spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.textPrimary,
-    paddingVertical: 10,
-    fontSize: typography.sizes.sm,
-  },
-  pillGroup: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: layout.borderRadius.full,
-    backgroundColor: colors.bgCard,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pillActive: {
-    backgroundColor: colors.brandGlow,
-    borderColor: colors.brandLight,
-  },
-  pillText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: typography.weights.semibold,
-  },
-  pillTextActive: {
-    color: colors.brandLight,
-  },
-  tableCard: {
-    padding: 0,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
-    flexWrap: 'wrap',
-    gap: layout.spacing.md,
-  },
-  userCol: {
-    flex: 2,
-    minWidth: 220,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  userName: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-  },
-  userSub: {
-    color: colors.textSecondary,
-    fontSize: typography.sizes.xs,
-    marginTop: 2,
-  },
-  statusCol: {
-    flex: 1,
-    minWidth: 120,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: layout.borderRadius.sm,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.bgInput,
-  },
-  badgeSuccess: {
-    backgroundColor: colors.verifiedBg,
-  },
-  badgeWarning: {
-    backgroundColor: colors.warningBg,
-  },
-  badgeError: {
-    backgroundColor: colors.errorBg,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.textSecondary,
-  },
-  actionCol: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  emptyState: {
-    padding: layout.spacing.xl,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: typography.sizes.sm,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: layout.spacing.md,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 540,
-    backgroundColor: colors.bgCard,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
-    paddingBottom: layout.spacing.sm,
-  },
-  modalTitle: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-  },
-  modalBody: {
-    gap: 8,
-  },
-  modalSubtitle: {
-    color: colors.brandLight,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-  },
-  detailRow: {
-    color: colors.textSecondary,
-    fontSize: typography.sizes.sm,
-  },
-  noteInput: {
-    backgroundColor: colors.bgInput,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: layout.borderRadius.md,
-    padding: layout.spacing.md,
-    color: colors.textPrimary,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  modalActionButtons: {
-    flexDirection: 'row',
-    gap: layout.spacing.sm,
-    marginTop: layout.spacing.md,
-    flexWrap: 'wrap',
-  },
-});

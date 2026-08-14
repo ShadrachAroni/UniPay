@@ -1,20 +1,65 @@
 import React, { ReactNode } from 'react';
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { colors, layout } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface CardProps {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  variant?: 'default' | 'subtle' | 'glow';
+  variant?: 'default' | 'subtle' | 'glow' | 'outline' | 'elevated';
+  className?: string;
 }
 
-export function Card({ children, style, variant = 'default' }: CardProps) {
+export function Card({ children, style, variant = 'default', className }: CardProps) {
+  const { tokens, isDark } = useTheme();
+  const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
+  const cardElevation = tokens.elevation[isDark ? 'dark' : 'light'].card;
+
+  const getVariantStyle = () => {
+    switch (variant) {
+      case 'subtle':
+        return {
+          backgroundColor: activeColors.surfaceSubtle,
+          borderColor: activeColors.borderSubtle,
+        };
+      case 'glow':
+        return {
+          backgroundColor: activeColors.surface,
+          borderColor: activeColors.brand,
+          shadowColor: activeColors.brand,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.25 : 0.15,
+          shadowRadius: 16,
+          elevation: 6,
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          borderColor: activeColors.border,
+        };
+      case 'elevated':
+        return {
+          backgroundColor: activeColors.surface,
+          borderColor: activeColors.border,
+          ...tokens.elevation[isDark ? 'dark' : 'light'].floating,
+        };
+      default:
+        return {
+          backgroundColor: activeColors.surface,
+          borderColor: activeColors.border,
+          ...cardElevation,
+        };
+    }
+  };
+
   return (
     <View
+      className={className}
       style={[
-        styles.card,
-        variant === 'subtle' && styles.subtle,
-        variant === 'glow' && styles.glow,
+        styles.baseCard,
+        {
+          borderRadius: tokens.borderRadius.lg,
+        },
+        getVariantStyle(),
         style,
       ]}
     >
@@ -24,24 +69,8 @@ export function Card({ children, style, variant = 'default' }: CardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.bgCard,
-    borderRadius: layout.borderRadius.lg,
+  baseCard: {
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: layout.spacing.md,
-  },
-  subtle: {
-    backgroundColor: colors.bgCardSubtle,
-    borderColor: colors.borderSubtle,
-  },
-  glow: {
-    backgroundColor: colors.bgCard,
-    borderColor: colors.brandLight,
-    shadowColor: colors.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 4,
+    padding: 16,
   },
 });

@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal } from 'react-native';
-import { colors, layout, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Chip } from '../../components/ui/Chip';
+import { SearchBar } from '../../components/ui/SearchBar';
 import { AuditLog } from '@unipay/shared';
+import {
+  ShieldCheck,
+  RefreshCw,
+  X,
+  FileCode,
+  Clock,
+  User,
+} from 'lucide-react-native';
 
 export default function AdminAuditScreen() {
+  const { tokens, isDark, activeColors } = useTheme();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState('');
@@ -27,7 +37,6 @@ export default function AdminAuditScreen() {
         const data = await res.json();
         setLogs(data.audit_logs || []);
       } else {
-        // Fallback demo audit logs
         setLogs([
           {
             id: 'log-101',
@@ -77,69 +86,86 @@ export default function AdminAuditScreen() {
   }, []);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerRow}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: activeColors.background }}
+      contentContainerStyle={{ padding: tokens.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' }}
+    >
+      <View className="flex-row justify-between items-center mb-6 flex-wrap gap-4">
         <View>
-          <Text style={styles.pageTitle}>Security Audit Trail</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text className="font-bold text-2xl" style={{ color: activeColors.text.primary }}>
+            Security Audit Trail
+          </Text>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginTop: 4 }}>
             Immutable administrative action logs and before/after mutation diffs (§11, §19)
           </Text>
         </View>
-        <Button title="Refresh Logs" size="sm" variant="secondary" icon="zap" onPress={fetchAuditLogs} />
+        <Button title="Refresh Logs" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchAuditLogs} />
       </View>
 
-      <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Icon name="check" size={14} color={colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
+      <View className="flex-row gap-3 mb-6">
+        <View className="flex-1">
+          <SearchBar
             placeholder="Filter by action (e.g. identity.approved, payment_rail.update)..."
-            placeholderTextColor={colors.textMuted}
             value={actionFilter}
-            onChangeText={setActionFilter}
-            onSubmitEditing={fetchAuditLogs}
+            onChangeText={(text) => {
+              setActionFilter(text);
+              fetchAuditLogs();
+            }}
           />
         </View>
-        <Button title="Filter" size="sm" variant="outline" onPress={fetchAuditLogs} />
       </View>
 
-      <Card style={styles.tableCard}>
+      <Card style={{ padding: 0 }}>
         {loading ? (
-          <View style={{ gap: 12 }}>
-            <Skeleton width="100%" height={40} />
-            <Skeleton width="100%" height={40} />
+          <View className="p-4 gap-3">
+            <Skeleton width="100%" height={50} />
+            <Skeleton width="100%" height={50} />
           </View>
         ) : logs.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="shield" size={32} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No audit records found</Text>
+          <View className="p-12 items-center justify-center">
+            <ShieldCheck size={36} color={activeColors.text.muted} />
+            <Text className="mt-2 text-sm" style={{ color: activeColors.text.muted }}>
+              No audit records found
+            </Text>
           </View>
         ) : (
-          logs.map((log) => (
+          logs.map((log, index) => (
             <TouchableOpacity
               key={log.id}
-              style={styles.tableRow}
+              className="flex-row justify-between items-center p-4 border-b flex-wrap gap-4"
+              style={{
+                borderColor: activeColors.border,
+                backgroundColor: index % 2 === 0 ? activeColors.surface : activeColors.surfaceSubtle,
+              }}
               activeOpacity={0.7}
               onPress={() => {
                 setSelectedLog(log);
                 setDetailModalVisible(true);
               }}
             >
-              <View style={styles.mainCol}>
-                <View style={styles.actionHeader}>
-                  <Text style={styles.actionName}>{log.action}</Text>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{log.actor_type.toUpperCase()}</Text>
-                  </View>
+              <View className="flex-2 min-w-[240px] gap-1.5">
+                <View className="flex-row items-center gap-2">
+                  <Text className="font-mono text-sm font-bold" style={{ color: activeColors.brand }}>
+                    {log.action}
+                  </Text>
+                  <Chip
+                    label={log.actor_type}
+                    size="sm"
+                  />
                 </View>
-                <Text style={styles.subText}>
+                <Text className="text-xs" style={{ color: activeColors.text.secondary }}>
                   Target: {log.target_type} ({log.target_id}) · Actor: {log.actor_id}
                 </Text>
               </View>
 
-              <View style={styles.timeCol}>
-                <Text style={styles.timeText}>{new Date(log.created_at).toLocaleTimeString()}</Text>
-                <Text style={styles.dateText}>{new Date(log.created_at).toLocaleDateString()}</Text>
+              <View className="items-end">
+                <Text className="font-semibold text-xs" style={{ color: activeColors.text.primary }}>
+                  {new Date(log.created_at).toLocaleTimeString()}
+                </Text>
+                <Text className="text-[10px]" style={{ color: activeColors.text.muted }}>
+                  {new Date(log.created_at).toLocaleDateString()}
+                </Text>
               </View>
             </TouchableOpacity>
           ))
@@ -148,33 +174,47 @@ export default function AdminAuditScreen() {
 
       {/* Audit Detail Modal */}
       <Modal visible={detailModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Audit Log Inspection</Text>
-              <TouchableOpacity onPress={() => setDetailModalVisible(false)}>
-                <Icon name="alert" size={18} color={colors.textSecondary} />
+        <View className="flex-1 justify-center items-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          <Card style={{ width: '100%', maxWidth: 540 }}>
+            <View className="flex-row justify-between items-center pb-3 mb-4 border-b" style={{ borderColor: activeColors.border }}>
+              <Text className="font-bold text-lg" style={{ color: activeColors.text.primary }}>
+                Audit Log Inspection
+              </Text>
+              <TouchableOpacity onPress={() => setDetailModalVisible(false)} className="p-1">
+                <X size={20} color={activeColors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             {selectedLog && (
-              <ScrollView style={{ maxHeight: 400 }}>
-                <View style={{ gap: 8 }}>
-                  <Text style={styles.modalDetail}>Action: {selectedLog.action}</Text>
-                  <Text style={styles.modalDetail}>Actor: {selectedLog.actor_id} ({selectedLog.actor_type})</Text>
-                  <Text style={styles.modalDetail}>Target: {selectedLog.target_type} ({selectedLog.target_id})</Text>
-                  <Text style={styles.modalDetail}>Timestamp: {selectedLog.created_at}</Text>
+              <ScrollView style={{ maxHeight: 420 }}>
+                <View className="gap-2.5">
+                  <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                    Action: <Text className="font-mono font-bold" style={{ color: activeColors.brand }}>{selectedLog.action}</Text>
+                  </Text>
+                  <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                    Actor: {selectedLog.actor_id} ({selectedLog.actor_type})
+                  </Text>
+                  <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.sm }}>
+                    Target: {selectedLog.target_type} ({selectedLog.target_id})
+                  </Text>
+                  <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                    Timestamp: {selectedLog.created_at}
+                  </Text>
 
-                  <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Before State</Text>
-                  <View style={styles.codeBlock}>
-                    <Text style={styles.codeText}>
+                  <Text className="font-bold text-xs uppercase mt-3" style={{ color: activeColors.brand }}>
+                    Before State
+                  </Text>
+                  <View className="p-3 rounded-xl border" style={{ backgroundColor: activeColors.surfaceSubtle, borderColor: activeColors.border }}>
+                    <Text className="font-mono text-xs" style={{ color: activeColors.text.primary }}>
                       {JSON.stringify(selectedLog.before_state || {}, null, 2)}
                     </Text>
                   </View>
 
-                  <Text style={[styles.sectionTitle, { marginTop: 12 }]}>After State</Text>
-                  <View style={styles.codeBlock}>
-                    <Text style={styles.codeText}>
+                  <Text className="font-bold text-xs uppercase mt-3" style={{ color: activeColors.brand }}>
+                    After State
+                  </Text>
+                  <View className="p-3 rounded-xl border" style={{ backgroundColor: activeColors.surfaceSubtle, borderColor: activeColors.border }}>
+                    <Text className="font-mono text-xs" style={{ color: activeColors.text.primary }}>
                       {JSON.stringify(selectedLog.after_state || {}, null, 2)}
                     </Text>
                   </View>
@@ -187,35 +227,3 @@ export default function AdminAuditScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  contentContainer: { padding: layout.spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  pageTitle: { color: colors.textPrimary, fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold },
-  pageSubtitle: { color: colors.textSecondary, fontSize: typography.sizes.sm, marginTop: 4 },
-  searchRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgInput, borderRadius: layout.borderRadius.md, paddingHorizontal: layout.spacing.md, borderWidth: 1, borderColor: colors.border, gap: 8 },
-  searchInput: { flex: 1, color: colors.textPrimary, paddingVertical: 10, fontSize: typography.sizes.sm },
-  tableCard: { padding: 0 },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: layout.spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  mainCol: { flex: 2, gap: 4 },
-  actionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  actionName: { color: colors.brandLight, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.fontMono },
-  badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: layout.borderRadius.sm, backgroundColor: colors.bgCardHover },
-  badgeText: { fontSize: 10, fontWeight: typography.weights.bold, color: colors.textSecondary },
-  subText: { color: colors.textSecondary, fontSize: typography.sizes.xs },
-  timeCol: { alignItems: 'flex-end' },
-  timeText: { color: colors.textPrimary, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  dateText: { color: colors.textMuted, fontSize: 10 },
-  emptyState: { padding: 32, alignItems: 'center', gap: 8 },
-  emptyText: { color: colors.textMuted, fontSize: typography.sizes.sm },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalCard: { width: '100%', maxWidth: 540, backgroundColor: colors.bgCard },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { color: colors.textPrimary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  modalDetail: { color: colors.textSecondary, fontSize: typography.sizes.sm },
-  sectionTitle: { color: colors.brandLight, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
-  codeBlock: { backgroundColor: colors.bgDark, padding: 10, borderRadius: layout.borderRadius.sm, borderWidth: 1, borderColor: colors.borderSubtle },
-  codeText: { color: colors.textPrimary, fontSize: 11, fontFamily: typography.fontMono },
-});
