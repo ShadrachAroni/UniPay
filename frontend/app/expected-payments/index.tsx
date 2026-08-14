@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Header } from '../../components/Header';
-import { FAB } from '../../components/FAB';
 import { getExpectedPayments } from '../../api/expectedPayments';
-import { ExpectedPayment, ExpectedPaymentStatus } from '../../api/types';
-import { Clock, Plus, CheckCircle2, AlertCircle } from 'lucide-react-native';
-import { Chip } from '../../components/Chip';
+import { ExpectedPayment } from '../../api/types';
+import { ProgressBar } from '../../components/ProgressBar';
+import { Plus, ArrowUpRight, AlertCircle, Clock, CheckCircle2 } from 'lucide-react-native';
 
-export default function ExpectedPaymentsScreen() {
+export default function ExpectedPaymentsListScreen() {
   const { tokens, isDark } = useTheme();
   const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
   const router = useRouter();
 
   const [payments, setPayments] = useState<ExpectedPayment[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'open' | 'paid' | 'overdue'>('open');
 
   const load = async () => {
     try {
@@ -37,128 +35,95 @@ export default function ExpectedPaymentsScreen() {
     setRefreshing(false);
   };
 
-  const filteredData = payments.filter(p => {
-    if (activeTab === 'open') return p.status === 'open' || p.status === 'partially_paid';
-    return p.status === activeTab;
-  });
-
-  const Tab = ({ id, label }: { id: 'open' | 'paid' | 'overdue', label: string }) => {
-    const isActive = activeTab === id;
-    return (
-      <TouchableOpacity 
-        onPress={() => setActiveTab(id)}
-        className="flex-1 py-3 items-center border-b-2"
-        style={{ borderBottomColor: isActive ? tokens.colors.light.brand : 'transparent' }}
-      >
-        <Text style={{ 
-          color: isActive ? tokens.colors.light.brand : activeColors.text.muted,
-          fontWeight: isActive ? '600' : '500',
-          fontSize: tokens.typography.size.sm
-        }}>
-          {label}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderItem = ({ item }: { item: ExpectedPayment }) => {
-    const isOverdue = new Date(item.due_at).getTime() < Date.now() && item.status !== 'paid';
-    
-    return (
-      <View 
-        className="rounded-xl p-4 mb-4"
-        style={{ backgroundColor: activeColors.surface, ...tokens.elevation[isDark ? 'dark' : 'light'].card }}
-      >
-        <View className="flex-row justify-between mb-3">
-          <Text className="font-semibold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
-            {item.reference}
-          </Text>
-          <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
-            KES {item.amount.toLocaleString()}
-          </Text>
-        </View>
-
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Clock size={14} color={isOverdue ? tokens.colors.semantic.error : activeColors.text.muted} />
-            <Text 
-              className="ml-1" 
-              style={{ 
-                color: isOverdue ? tokens.colors.semantic.error : activeColors.text.muted, 
-                fontSize: tokens.typography.size.sm 
-              }}
-            >
-              Due {new Date(item.due_at).toLocaleDateString()}
-            </Text>
-          </View>
-          
-          <Chip 
-            label={item.status.replace('_', ' ').toUpperCase()} 
-            style={{ 
-              backgroundColor: item.status === 'paid' 
-                ? tokens.colors.status.expectedPayment.paid 
-                : item.status === 'partially_paid' 
-                  ? tokens.colors.status.expectedPayment.partial 
-                  : isOverdue ? tokens.colors.status.expectedPayment.overdue : tokens.colors.status.expectedPayment.open 
-            }} 
-          />
-        </View>
-
-        {item.amount_paid_to_date > 0 && item.status !== 'paid' && (
-          <View className="mt-3 pt-3 border-t" style={{ borderTopColor: activeColors.border }}>
-            <View className="flex-row justify-between mb-1">
-              <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>Paid so far</Text>
-              <Text style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.xs, fontWeight: '600' }}>
-                KES {item.amount_paid_to_date.toLocaleString()}
-              </Text>
-            </View>
-            {/* Progress Bar */}
-            <View className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: activeColors.border }}>
-              <View 
-                className="h-full rounded-full" 
-                style={{ 
-                  backgroundColor: tokens.colors.light.brand,
-                  width: `${Math.min(100, (item.amount_paid_to_date / item.amount) * 100)}%` 
-                }} 
-              />
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
+  const totalOutstanding = payments.reduce((acc, p) => acc + (p.amount - p.amount_paid_to_date), 0);
 
   return (
     <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
-      <Header title="Expected Payments" />
-
-      {/* Tabs */}
-      <View className="flex-row bg-transparent px-2 mb-2" style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: activeColors.border }}>
-        <Tab id="open" label="Open" />
-        <Tab id="paid" label="Paid" />
-        <Tab id="overdue" label="Overdue" />
-      </View>
-
-      <FlatList
-        data={filteredData}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: tokens.spacing.lg, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tokens.colors.light.brand} />}
-        ListEmptyComponent={
-          <View className="items-center justify-center py-20">
-            <AlertCircle size={48} color={activeColors.border} />
-            <Text className="mt-4" style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.base }}>
-              No {activeTab} payments found.
-            </Text>
-          </View>
+      <Header 
+        title="Expected Payments" 
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => router.push('/expected-payments/new')}
+            className="w-10 h-10 rounded-full items-center justify-center bg-blue-600"
+          >
+            <Plus size={20} color="#ffffff" />
+          </TouchableOpacity>
         }
       />
 
-      <FAB 
-        icon={<Plus size={24} color="#ffffff" />} 
-        onPress={() => router.push('/expected-payments/new')} 
-      />
+      <ScrollView 
+        contentContainerStyle={{ padding: tokens.spacing.lg }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tokens.colors.light.brand} />}
+      >
+        {/* Total Outstanding Card */}
+        <View 
+          className="rounded-2xl p-5 mb-6 border"
+          style={{ backgroundColor: activeColors.surface, borderColor: tokens.colors.light.brand + '40' }}
+        >
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }} className="uppercase font-semibold mb-1">
+            Total Outstanding Expected
+          </Text>
+          <Text className="font-bold text-3xl" style={{ color: activeColors.text.primary }}>
+            KES {totalOutstanding.toLocaleString()}
+          </Text>
+        </View>
+
+        {/* List of Payments */}
+        {payments.map((item) => {
+          const isOverdue = item.status === 'overdue';
+          const progress = item.amount > 0 ? item.amount_paid_to_date / item.amount : 0;
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => router.push(`/expected-payments/${item.id}`)}
+              className={`rounded-2xl p-4 mb-4 border ${
+                isOverdue ? 'border-red-400 bg-red-50/40 dark:bg-red-950/20' : 'border-gray-200 dark:border-slate-800'
+              }`}
+              style={{ backgroundColor: isOverdue ? undefined : activeColors.surface }}
+            >
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  {isOverdue ? (
+                    <AlertCircle size={18} color={tokens.colors.semantic.error} className="mr-2" />
+                  ) : (
+                    <Clock size={18} color={tokens.colors.light.brand} className="mr-2" />
+                  )}
+                  <Text className="font-bold text-base flex-1" style={{ color: activeColors.text.primary }}>
+                    {item.reference}
+                  </Text>
+                </View>
+
+                <View className={`px-2 py-0.5 rounded-full ${isOverdue ? 'bg-red-100 dark:bg-red-950' : 'bg-blue-100 dark:bg-blue-950'}`}>
+                  <Text className={`text-[10px] font-bold uppercase ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                    {item.status.replace('_', ' ')}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 12 }}>
+                Payer: {item.payer_reference || 'Unassigned'} • Due: {new Date(item.due_at).toLocaleDateString()}
+              </Text>
+
+              {/* Progress Bar */}
+              <ProgressBar 
+                progress={progress} 
+                color={isOverdue ? tokens.colors.semantic.error : tokens.colors.light.brand}
+                showPercentage={true}
+              />
+
+              <View className="flex-row justify-between items-center mt-3 pt-2 border-t border-gray-100 dark:border-slate-800">
+                <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs }}>
+                  Paid: KES {item.amount_paid_to_date.toLocaleString()}
+                </Text>
+                <Text className="font-bold text-sm" style={{ color: activeColors.text.primary }}>
+                  Target: KES {item.amount.toLocaleString()}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }

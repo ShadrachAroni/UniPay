@@ -1,4 +1,4 @@
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,18 +9,14 @@ import '../global.css';
 
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { ToastProvider } from '../components/Toast';
-
 import { AuthProvider } from '../components/AuthProvider';
 
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  
   useEffect(() => {
-    // Artificial delay to simulate font/resource loading
     setTimeout(() => {
       SplashScreen.hideAsync();
     }, 500);
@@ -34,7 +30,7 @@ export default function RootLayout() {
             <AuthProvider>
               <ToastProvider>
                 <BottomSheetModalProvider>
-                  <Slot />
+                  <Stack screenOptions={{ headerShown: false }} />
                 </BottomSheetModalProvider>
               </ToastProvider>
             </AuthProvider>

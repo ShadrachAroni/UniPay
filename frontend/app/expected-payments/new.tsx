@@ -1,131 +1,137 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Header } from '../../components/Header';
-import { useToast } from '../../components/Toast';
 import { createExpectedPayment } from '../../api/expectedPayments';
-import { Calendar, User, DollarSign } from 'lucide-react-native';
+import { useToast } from '../../components/Toast';
+import { Share2, QrCode, ArrowRight } from 'lucide-react-native';
 
-export default function NewExpectedPaymentScreen() {
+export default function CreateExpectedPaymentScreen() {
   const { tokens, isDark } = useTheme();
   const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
   const router = useRouter();
   const { showToast } = useToast();
 
   const [reference, setReference] = useState('');
-  const [amount, setAmount] = useState('');
   const [payerRef, setPayerRef] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [isCreated, setIsCreated] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleCreate = async () => {
     if (!reference || !amount) {
       showToast('Reference and amount are required', 'error');
       return;
     }
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) {
+      showToast('Enter a valid amount', 'error');
+      return;
+    }
 
-    setIsLoading(true);
     try {
       await createExpectedPayment({
-        owner_profile_id: 'prof_123',
         reference,
-        amount: parseFloat(amount),
-        payer_reference: payerRef,
-        due_at: new Date(Date.now() + 86400000 * 7).toISOString(), // Mock 7 days from now
+        payer_reference: payerRef || 'Unassigned',
+        amount: num,
       });
-      showToast('Expected payment created', 'success');
-      router.back();
-    } catch (e: any) {
-      showToast(e.message || 'Error creating payment', 'error');
-    } finally {
-      setIsLoading(false);
+      setIsCreated(true);
+      showToast('Expected Payment Created!', 'success');
+    } catch (e) {
+      showToast('Failed to create expected payment', 'error');
     }
   };
-
-  const InputField = ({ icon: Icon, label, placeholder, value, onChangeText, keyboardType = 'default' }: any) => (
-    <View className="mb-5">
-      <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
-        {label}
-      </Text>
-      <View 
-        className="flex-row items-center px-4 py-1 rounded-xl border"
-        style={{ backgroundColor: activeColors.surface, borderColor: activeColors.border }}
-      >
-        <Icon size={18} color={activeColors.text.muted} />
-        <TextInput
-          className="flex-1 ml-3 h-12 font-medium"
-          style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}
-          placeholder={placeholder}
-          placeholderTextColor={activeColors.text.muted}
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-        />
-      </View>
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1"
-      style={{ backgroundColor: activeColors.background }}
+      style={{ flex: 1, backgroundColor: activeColors.background }}
     >
-      <Header title="New Expected Payment" />
-      
-      <ScrollView contentContainerStyle={{ padding: tokens.spacing.lg }}>
-        <InputField 
-          icon={User}
-          label="Payment Reference / Title" 
-          placeholder="e.g. Rent Payment - Aug"
-          value={reference}
-          onChangeText={setReference}
-        />
+      <Header title="New Expected Payment" showBack={true} />
 
-        <InputField 
-          icon={DollarSign}
-          label="Amount (KES)" 
-          placeholder="0.00"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
-        />
+      <ScrollView 
+        contentContainerStyle={{ padding: tokens.spacing.lg, paddingBottom: 60 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {!isCreated ? (
+          <>
+            <View className="mb-4">
+              <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
+                Payment Reference / Description *
+              </Text>
+              <TextInput
+                className="px-4 h-12 rounded-xl border font-medium"
+                style={{ backgroundColor: activeColors.surface, borderColor: activeColors.border, color: activeColors.text.primary }}
+                placeholder="e.g. Invoice #1042 Software Dev"
+                placeholderTextColor={activeColors.text.muted}
+                value={reference}
+                onChangeText={setReference}
+              />
+            </View>
 
-        <InputField 
-          icon={User}
-          label="Payer Phone / Reference (Optional)" 
-          placeholder="+254..."
-          value={payerRef}
-          onChangeText={setPayerRef}
-          keyboardType="phone-pad"
-        />
+            <View className="mb-4">
+              <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
+                Target Payer (Phone / Name)
+              </Text>
+              <TextInput
+                className="px-4 h-12 rounded-xl border font-medium"
+                style={{ backgroundColor: activeColors.surface, borderColor: activeColors.border, color: activeColors.text.primary }}
+                placeholder="+254 712 345 678 or Acme Client"
+                placeholderTextColor={activeColors.text.muted}
+                value={payerRef}
+                onChangeText={setPayerRef}
+              />
+            </View>
 
-        {/* Due date mock input */}
-        <View className="mb-8">
-          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
-            Due Date
-          </Text>
-          <View 
-            className="flex-row items-center px-4 h-14 rounded-xl border"
-            style={{ backgroundColor: activeColors.surface, borderColor: activeColors.border }}
-          >
-            <Calendar size={18} color={activeColors.text.muted} />
-            <Text className="ml-3 font-medium" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
-              7 days from now (Mock)
+            <View className="mb-6">
+              <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
+                Expected Amount (KES) *
+              </Text>
+              <TextInput
+                className="px-4 h-12 rounded-xl border font-bold text-lg"
+                style={{ backgroundColor: activeColors.surface, borderColor: activeColors.border, color: activeColors.text.primary }}
+                placeholder="0.00"
+                placeholderTextColor={activeColors.text.muted}
+                keyboardType="numeric"
+                value={amount}
+                onChangeText={setAmount}
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={handleCreate}
+              className="w-full py-4 rounded-xl items-center justify-center flex-row bg-blue-600"
+            >
+              <Text className="font-bold text-white text-base mr-2">Generate Expected Payment Link</Text>
+              <ArrowRight size={20} color="#ffffff" />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View className="items-center py-6">
+            <View className="w-44 h-44 rounded-3xl bg-white p-4 items-center justify-center mb-6 border border-gray-200 shadow-md">
+              <QrCode size={120} color="#0f172a" />
+              <Text className="text-[10px] font-bold text-slate-500 mt-1 uppercase">UniPay Payment QR</Text>
+            </View>
+
+            <Text className="font-bold text-xl mb-1" style={{ color: activeColors.text.primary }}>
+              Expected Payment Ready
             </Text>
-          </View>
-        </View>
+            <Text className="text-center text-sm px-6 mb-6" style={{ color: activeColors.text.secondary }}>
+              Share this link or QR code with your client to track payment reconciliation automatically.
+            </Text>
 
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={isLoading}
-          className="w-full items-center justify-center rounded-xl py-4"
-          style={{ backgroundColor: tokens.colors.light.brand, opacity: isLoading ? 0.7 : 1 }}
-        >
-          <Text style={{ color: '#ffffff', fontSize: tokens.typography.size.lg, fontWeight: '600' }}>
-            {isLoading ? 'Creating...' : 'Create Payment'}
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                showToast('Link copied to clipboard!', 'success');
+                router.replace('/expected-payments');
+              }}
+              className="w-full py-4 rounded-xl flex-row items-center justify-center bg-blue-600 mb-3"
+            >
+              <Share2 size={20} color="#ffffff" className="mr-2" />
+              <Text className="font-bold text-white text-base ml-2">Share Link with Client</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -15,10 +15,10 @@ export function SearchBar({ placeholder = 'Search...', onChangeText, debounceMs 
   const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
   
   const [value, setValue] = useState('');
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (timeoutRef.current) {
+    if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
     }
     
@@ -27,7 +27,7 @@ export function SearchBar({ placeholder = 'Search...', onChangeText, debounceMs 
     }, debounceMs);
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
     };
   }, [value, debounceMs, onChangeText]);
 

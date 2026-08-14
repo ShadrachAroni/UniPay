@@ -8,8 +8,9 @@ import { useToast } from '../components/Toast';
 import { Building2, Plus, Clock, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { Chip } from '../components/Chip';
 import { BottomSheet } from '../components/BottomSheet';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
+// Payouts Screen implementation
 export default function PayoutsScreen() {
   const { tokens, isDark } = useTheme();
   const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
@@ -65,7 +66,7 @@ export default function PayoutsScreen() {
   };
 
   const renderItem = ({ item }: { item: Payout }) => {
-    let statusColor = tokens.colors.status.payout.pending;
+    let statusColor: string = tokens.colors.status.payout.pending;
     let Icon = Clock;
     
     if (item.status === 'completed') {
@@ -137,12 +138,12 @@ export default function PayoutsScreen() {
             Request Payout
           </Text>
           
-          <ScrollView>
+          <ScrollView keyboardShouldPersistTaps="handled">
             <View className="mb-4">
               <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
                 Amount (KES)
               </Text>
-              <TextInput
+              <BottomSheetTextInput
                 className="px-4 h-12 rounded-xl border font-medium"
                 style={{ 
                   backgroundColor: activeColors.surface, 
@@ -162,7 +163,7 @@ export default function PayoutsScreen() {
               <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.sm, marginBottom: 6 }}>
                 Destination (Bank/M-PESA)
               </Text>
-              <TextInput
+              <BottomSheetTextInput
                 className="px-4 h-12 rounded-xl border font-medium"
                 style={{ 
                   backgroundColor: activeColors.surface, 

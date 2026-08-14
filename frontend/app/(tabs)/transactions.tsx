@@ -11,6 +11,7 @@ import { getTransactions } from '../../api/transactions';
 import { Transaction } from '../../api/types';
 import { useToast } from '../../components/Toast';
 import { SearchBar } from '../../components/SearchBar';
+import { StatusBadge } from '../../components/StatusBadge';
 
 export default function TransactionsScreen() {
   const { tokens, isDark } = useTheme();
@@ -141,11 +142,6 @@ export default function TransactionsScreen() {
   ];
 
   const renderItem = ({ item }: { item: Transaction }) => {
-    // Status color mapping
-    let statusColor = tokens.colors.status.payment.pending;
-    if (item.payment_status === 'completed') statusColor = tokens.colors.status.payment.success;
-    if (item.payment_status === 'failed') statusColor = tokens.colors.status.payment.failed;
-
     return (
       <TouchableOpacity 
         className="flex-row items-center justify-between py-3 border-b"
@@ -161,16 +157,19 @@ export default function TransactionsScreen() {
           </View>
           <View>
             <Text className="font-semibold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
-              {item.payment_status === 'completed' ? 'Received' : item.payment_status}
+              Tx #{item.id.slice(0, 8)}
             </Text>
-            <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs, marginTop: 2 }}>
-              {new Date(item.transaction_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Text>
+            
+            {/* Dual Status Badges: Payment & Settlement */}
+            <View className="flex-row gap-1 mt-1">
+              <StatusBadge type="payment" status={item.payment_status} />
+              <StatusBadge type="settlement" status={item.settlement_status} />
+            </View>
           </View>
         </View>
 
         <View className="items-end justify-center mr-2">
-          <Text className="font-bold" style={{ color: statusColor, fontSize: tokens.typography.size.base }}>
+          <Text className="font-bold text-emerald-600 dark:text-emerald-400" style={{ fontSize: tokens.typography.size.base }}>
             +{item.amount.toLocaleString()}
           </Text>
           <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs }}>

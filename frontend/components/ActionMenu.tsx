@@ -5,6 +5,8 @@ import { BottomSheet } from './BottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { LucideIcon } from 'lucide-react-native';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export interface ActionMenuItem {
   id: string;
   label: string;
@@ -23,12 +25,13 @@ export const ActionMenu = React.forwardRef<BottomSheetModal, ActionMenuProps>(
   ({ title, actions, onDismiss }, ref) => {
     const { tokens, isDark } = useTheme();
     const activeColors = isDark ? tokens.colors.dark : tokens.colors.light;
+    const insets = useSafeAreaInsets();
 
     const snapPoints = React.useMemo(() => {
-      // roughly 60px per item + headers/padding
-      const height = (actions.length * 60) + (title ? 60 : 20) + 40;
+      // roughly 60px per item + headers/padding + bottom insets
+      const height = (actions.length * 60) + (title ? 60 : 20) + 40 + Math.max(insets.bottom, 24);
       return [height];
-    }, [actions.length, title]);
+    }, [actions.length, title, insets.bottom]);
 
     return (
       <BottomSheet ref={ref} snapPoints={snapPoints} onDismiss={onDismiss}>

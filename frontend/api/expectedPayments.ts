@@ -1,33 +1,85 @@
 import { ExpectedPayment } from './types';
 
-const MOCK_EXPECTED_PAYMENTS: ExpectedPayment[] = [
-  { id: 'ep_1', owner_profile_id: 'prof_123', amount: 5000, reference: 'Invoice #001', due_at: new Date(Date.now() + 86400000 * 5).toISOString(), status: 'open', amount_paid_to_date: 0 },
-  { id: 'ep_2', owner_profile_id: 'prof_123', amount: 15000, reference: 'Rent Aug', due_at: new Date(Date.now() - 86400000).toISOString(), status: 'partially_paid', amount_paid_to_date: 5000 },
+const MOCK_EXPECTED: ExpectedPayment[] = [
+  {
+    id: 'exp_1',
+    owner_profile_id: 'prof_123',
+    payer_reference: '+254 712 345 678',
+    amount: 15000,
+    reference: 'Invoice #1042 - Software Dev',
+    due_at: new Date(Date.now() - 86400000 * 2).toISOString(), // Overdue 2 days
+    status: 'overdue',
+    amount_paid_to_date: 5000,
+  },
+  {
+    id: 'exp_2',
+    owner_profile_id: 'prof_123',
+    payer_reference: 'Acme Client',
+    amount: 25000,
+    reference: 'Design Retainer - Q3',
+    due_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+    status: 'partially_paid',
+    amount_paid_to_date: 10000,
+  },
+  {
+    id: 'exp_3',
+    owner_profile_id: 'prof_123',
+    payer_reference: 'John Doe',
+    amount: 8000,
+    reference: 'Consulting Fee',
+    due_at: new Date(Date.now() + 86400000 * 10).toISOString(),
+    status: 'open',
+    amount_paid_to_date: 0,
+  },
 ];
 
 /**
  * MOCK CONTRACT
  * Input: none
  * Output: ExpectedPayment[]
- * Notes: Lists expected payments for the user
+ * Notes: Retrieves all expected payments for current profile
  */
 export async function getExpectedPayments(): Promise<ExpectedPayment[]> {
-  return new Promise((resolve) => setTimeout(() => resolve(MOCK_EXPECTED_PAYMENTS), 600));
+  return new Promise((resolve) => setTimeout(() => resolve(MOCK_EXPECTED), 400));
 }
 
 /**
  * MOCK CONTRACT
- * Input: Omit<ExpectedPayment, 'id' | 'status' | 'amount_paid_to_date'>
+ * Input: id string
  * Output: ExpectedPayment
- * Notes: Creates a new expected payment record
+ * Notes: Retrieves details for a specific expected payment
  */
-export async function createExpectedPayment(data: any): Promise<ExpectedPayment> {
+export async function getExpectedPayment(id: string): Promise<ExpectedPayment> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const found = MOCK_EXPECTED.find((ep) => ep.id === id);
+      if (found) resolve(found);
+      else resolve(MOCK_EXPECTED[0]);
+    }, 300);
+  });
+}
+
+/**
+ * MOCK CONTRACT
+ * Input: data Partial<ExpectedPayment>
+ * Output: ExpectedPayment
+ * Notes: Creates a new expected payment entry
+ */
+export async function createExpectedPayment(data: Partial<ExpectedPayment>): Promise<ExpectedPayment> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({
-      ...data,
-      id: `ep_${Math.random()}`,
-      status: 'open',
-      amount_paid_to_date: 0
-    }), 700);
+    setTimeout(() => {
+      const newEp: ExpectedPayment = {
+        id: `exp_${Math.random().toString(36).substring(2, 9)}`,
+        owner_profile_id: 'prof_123',
+        payer_reference: data.payer_reference || 'Payer Ref',
+        amount: data.amount || 0,
+        reference: data.reference || 'Expected Payment',
+        due_at: data.due_at || new Date(Date.now() + 86400000 * 7).toISOString(),
+        status: 'open',
+        amount_paid_to_date: 0,
+      };
+      MOCK_EXPECTED.unshift(newEp);
+      resolve(newEp);
+    }, 500);
   });
 }

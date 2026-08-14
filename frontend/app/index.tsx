@@ -1,9 +1,17 @@
-import { Text, View } from 'react-native';
+import React from 'react';
+import { Redirect } from 'expo-router';
+import { useAuth } from '../components/AuthProvider';
 
 export default function Index() {
-  return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="text-xl font-bold">UniPay Setup Complete</Text>
-    </View>
-  );
+  const { token, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (token) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/login" />;
 }

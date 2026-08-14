@@ -1,5 +1,5 @@
-export type AccountType = 'personal' | 'business';
-export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+export type AccountType = 'individual' | 'business' | 'personal';
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected' | 'unsubmitted' | 'submitted';
 export type Status = 'active' | 'inactive' | 'suspended';
 
 export interface Profile {
@@ -7,10 +7,12 @@ export interface Profile {
   account_type: AccountType;
   display_name: string;
   owner_name: string;
-  phone: string;
-  email: string;
-  currency: string;
+  business_name?: string;
+  phone?: string;
+  email?: string;
+  currency?: string;
   verification_status: VerificationStatus;
+  admin_role?: 'super_admin' | 'support' | 'compliance_reviewer' | null;
   id_document_url?: string;
 }
 

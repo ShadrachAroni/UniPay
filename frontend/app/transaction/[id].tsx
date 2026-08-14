@@ -7,6 +7,7 @@ import { getTransactionDetails, getReconciliationMatches } from '../../api/trans
 import { Transaction, ReconciliationMatch } from '../../api/types';
 import { CheckCircle2, AlertTriangle, Info, Bot } from 'lucide-react-native';
 import { Chip } from '../../components/Chip';
+import { StatusBadge } from '../../components/StatusBadge';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,14 +78,8 @@ export default function TransactionDetailScreen() {
           </Text>
 
           <View className="flex-row mt-4 gap-2">
-            <Chip 
-              label={tx.payment_status.toUpperCase()} 
-              style={{ backgroundColor: isSuccess ? tokens.colors.semantic.success : tokens.colors.semantic.warning }}
-            />
-            <Chip 
-              label={`Settlement: ${tx.settlement_status}`}
-              style={{ backgroundColor: tx.settlement_status === 'settled' ? tokens.colors.semantic.info : tokens.colors.status.settlement.pending }}
-            />
+            <StatusBadge type="payment" status={tx.payment_status} />
+            <StatusBadge type="settlement" status={tx.settlement_status} />
           </View>
         </View>
 

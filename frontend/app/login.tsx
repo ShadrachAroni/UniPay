@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../theme/ThemeProvider';
 import { useToast } from '../components/Toast';
@@ -38,7 +38,10 @@ export default function LoginScreen() {
       className="flex-1"
       style={{ backgroundColor: activeColors.background }}
     >
-      <View className="flex-1 justify-center px-6 pb-12">
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: tokens.spacing.lg, paddingBottom: 60 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View className="items-center mb-10">
           <View 
             className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
@@ -61,17 +64,18 @@ export default function LoginScreen() {
         </View>
 
         <View 
-          className="rounded-xl px-4 py-2 border mb-6"
+          className="rounded-2xl px-5 py-3 border mb-8"
           style={{ 
             backgroundColor: activeColors.surface,
-            borderColor: activeColors.border
+            borderColor: activeColors.border,
+            ...tokens.elevation[isDark ? 'dark' : 'light'].card
           }}
         >
-          <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs, marginTop: 4 }}>
+          <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, fontWeight: '500', marginBottom: 4 }}>
             Phone Number
           </Text>
           <TextInput
-            className="font-medium h-10"
+            className="font-semibold h-12"
             style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.lg }}
             placeholder="+254 700 000000"
             placeholderTextColor={activeColors.text.muted}
@@ -86,13 +90,17 @@ export default function LoginScreen() {
           onPress={handleLogin}
           disabled={isLoading}
           className="w-full items-center justify-center rounded-xl py-4"
-          style={{ backgroundColor: tokens.colors.light.brand, opacity: isLoading ? 0.7 : 1 }}
+          style={{ 
+            backgroundColor: tokens.colors.light.brand, 
+            opacity: isLoading ? 0.7 : 1,
+            ...tokens.elevation[isDark ? 'dark' : 'light'].card
+          }}
         >
           <Text style={{ color: '#ffffff', fontSize: tokens.typography.size.lg, fontWeight: '600' }}>
             {isLoading ? 'Sending...' : 'Continue'}
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

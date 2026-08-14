@@ -68,13 +68,13 @@ export default function PaymentPoolsScreen() {
 
         <View className="mb-2 flex-row justify-between items-end">
           <View>
-            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, mb: 2 }}>Collected</Text>
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 2 }}>Collected</Text>
             <Text className="font-bold" style={{ color: tokens.colors.light.brand, fontSize: tokens.typography.size.lg }}>
               KES {collected.toLocaleString()}
             </Text>
           </View>
           <View className="items-end">
-            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, mb: 2 }}>Target</Text>
+            <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 2 }}>Target</Text>
             <Text className="font-semibold" style={{ color: activeColors.text.primary, fontSize: tokens.typography.size.base }}>
               KES {item.target_amount.toLocaleString()}
             </Text>
