@@ -55,6 +55,20 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="pay/[alias]"
+            options={{
+              title: 'UniPay Checkout',
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="[alias]"
+            options={{
+              title: 'UniPay Checkout',
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
             name="(auth)/sign-in"
             options={{
               title: 'Sign In',
