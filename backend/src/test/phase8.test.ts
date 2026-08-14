@@ -165,7 +165,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
       let checkoutData: any = await checkoutRes.json();
       assert.strictEqual(checkoutData.provider, 'seeded');
 
-      // 3. Disable seeded rail via Admin API -> LOOP becomes primary
+      // 3. Disable seeded and seeded_2 rails via Admin API -> LOOP becomes primary
       const toggleSeededRes = await fetch(`${baseUrl}/api/v1/admin/payment-rails/seeded`, {
         method: 'PUT',
         headers: {
@@ -175,6 +175,15 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         body: JSON.stringify({ is_enabled: false }),
       });
       assert.strictEqual(toggleSeededRes.status, 200);
+
+      await fetch(`${baseUrl}/api/v1/admin/payment-rails/seeded_2`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer clerk_admin_super',
+        },
+        body: JSON.stringify({ is_enabled: false }),
+      });
 
       checkoutRes = await fetch(`${baseUrl}/api/v1/checkout/payment-options`, {
         method: 'POST',
@@ -189,7 +198,16 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
       checkoutData = await checkoutRes.json();
       assert.strictEqual(checkoutData.provider, 'loop');
 
-      // 4. Disable LOOP rail as well -> No enabled rails left (422)
+      // 4. Disable LOOP and seeded_2 rails as well -> No enabled rails left (422)
+      await fetch(`${baseUrl}/api/v1/admin/payment-rails/seeded_2`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer clerk_admin_super',
+        },
+        body: JSON.stringify({ is_enabled: false }),
+      });
+
       const toggleLoopRes = await fetch(`${baseUrl}/api/v1/admin/payment-rails/loop`, {
         method: 'PUT',
         headers: {
@@ -234,8 +252,16 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
       checkoutData = await checkoutRes.json();
       assert.strictEqual(checkoutData.provider, 'loop');
 
-      // 6. Re-enable seeded rail -> Restored to 200 with seeded
+      // 6. Re-enable seeded and seeded_2 rails -> Restored to 200 with seeded
       await fetch(`${baseUrl}/api/v1/admin/payment-rails/seeded`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer clerk_admin_super',
+        },
+        body: JSON.stringify({ is_enabled: true }),
+      });
+      await fetch(`${baseUrl}/api/v1/admin/payment-rails/seeded_2`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

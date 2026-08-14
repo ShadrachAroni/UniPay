@@ -17,9 +17,16 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
   private failureCount = 0;
   private failureMessage = 'Simulated SeededRailAdapter failure';
   private mockStatuses = new Map<string, ProviderStatusResult['status']>();
+  private readonly providerName: string;
+  private readonly currency: string;
+
+  constructor(providerName = 'seeded', currency = 'KES') {
+    this.providerName = providerName;
+    this.currency = currency;
+  }
 
   name(): string {
-    return 'seeded';
+    return this.providerName;
   }
 
   capabilities(): ProviderCapabilities {
@@ -29,7 +36,7 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
       refund: true,
       disbursement: true,
       webhooks: true,
-      supportedCurrencies: ['KES'],
+      supportedCurrencies: [this.currency],
       supportedCountries: ['KE'],
       settlementEstimate: 'instant',
       feeStructure: {
@@ -78,10 +85,10 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
 
     const providerReference = `SEEDED_PAY_${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
     const rawResponse = {
-      provider: 'seeded',
+      provider: this.providerName,
       reference: providerReference,
       amount: request.amount,
-      currency: request.currency,
+      currency: request.currency || this.currency,
       orderReference: request.orderReference,
       idempotencyKey: request.idempotencyKey,
       payerPhone: request.payerPhone || null,
@@ -108,9 +115,9 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
       providerReference,
       status: configuredStatus,
       amount: 3000,
-      currency: 'KES',
+      currency: this.currency,
       rawResponse: {
-        provider: 'seeded',
+        provider: this.providerName,
         reference: providerReference,
         status: configuredStatus.toUpperCase(),
         timestamp: new Date().toISOString(),
@@ -128,11 +135,11 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
       refundReference,
       status: 'completed',
       rawResponse: {
-        provider: 'seeded',
+        provider: this.providerName,
         refundReference,
         originalReference: request.providerReference,
         amount: request.amount,
-        currency: request.currency,
+        currency: request.currency || this.currency,
         status: 'COMPLETED',
         timestamp: new Date().toISOString(),
       },
@@ -149,11 +156,11 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
       disbursementReference,
       status: 'completed',
       rawResponse: {
-        provider: 'seeded',
+        provider: this.providerName,
         disbursementReference,
         recipientIdentifier: request.recipientIdentifier,
         amount: request.amount,
-        currency: request.currency,
+        currency: request.currency || this.currency,
         status: 'COMPLETED',
         timestamp: new Date().toISOString(),
       },
@@ -180,12 +187,12 @@ export class SeededRailAdapter implements PaymentProviderAdapter {
     }
 
     return {
-      provider: 'seeded',
+      provider: this.providerName,
       rail: 'request_to_pay',
       internal_reference: data.internal_reference || `INT_${crypto.randomUUID().slice(0, 8)}`,
       external_reference: data.reference || data.providerReference || data.external_reference || 'EXT_SEEDED',
       amount,
-      currency: data.currency || 'KES',
+      currency: data.currency || this.currency,
       provider_fee: providerFee,
       net_amount: netAmount,
       payer_identifier: data.payerPhone || data.payer_identifier || data.payerEmail || null,

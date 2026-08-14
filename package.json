@@ -20,6 +20,7 @@
     "test": "npm run test --workspace=backend",
     "check:secrets": "node --import tsx scripts/scan-secrets.ts",
     "migrate": "npm run migrate --workspace=backend",
+    "seed:demo": "npx tsx backend/src/scripts/seed-demo-data.ts",
     "postinstall": "node scripts/patch_metro.js"
   },
   "keywords": [

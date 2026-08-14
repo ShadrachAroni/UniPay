@@ -65,3 +65,48 @@ INSERT INTO payment_rails (
     max_amount = EXCLUDED.max_amount,
     capabilities_json = EXCLUDED.capabilities_json,
     updated_at = CURRENT_TIMESTAMP;
+
+-- Seed second rail for multi-rail adapter proof (Phase 10)
+INSERT INTO payment_rails (
+    id,
+    name,
+    adapter_key,
+    is_enabled,
+    supported_currencies,
+    supported_countries,
+    min_amount,
+    max_amount,
+    capabilities_json
+) VALUES (
+    'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
+    'PesaLink Rail (Simulated Fixture)',
+    'seeded_2',
+    TRUE,
+    ARRAY['KES'],
+    ARRAY['KE'],
+    10.00,
+    1000000.00,
+    '{
+        "collection": true,
+        "statusInquiry": true,
+        "refund": true,
+        "disbursement": true,
+        "webhooks": true,
+        "supportedCurrencies": ["KES"],
+        "supportedCountries": ["KE"],
+        "settlementEstimate": "instant",
+        "feeStructure": {
+            "fixed": 0,
+            "percentage": 0.005
+        }
+    }'::jsonb
+) ON CONFLICT (adapter_key) DO UPDATE SET
+    name = EXCLUDED.name,
+    is_enabled = EXCLUDED.is_enabled,
+    supported_currencies = EXCLUDED.supported_currencies,
+    supported_countries = EXCLUDED.supported_countries,
+    min_amount = EXCLUDED.min_amount,
+    max_amount = EXCLUDED.max_amount,
+    capabilities_json = EXCLUDED.capabilities_json,
+    updated_at = CURRENT_TIMESTAMP;
+

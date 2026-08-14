@@ -397,6 +397,7 @@ describe('Phase 2 Verification Test Suite — Provider Adapter Architecture & Pa
 
     it('returns 422 when all rails for currency/country are disabled', async () => {
       await setRailEnabled('seeded', false);
+      await setRailEnabled('seeded_2', false);
       await setRailEnabled('loop', false);
 
       const res = await fetch(`${baseUrl}/api/v1/checkout/payment-options`, {

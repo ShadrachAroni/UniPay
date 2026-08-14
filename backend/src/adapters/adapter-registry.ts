@@ -43,7 +43,8 @@ export class AdapterRegistry {
   }
 }
 
-// Default system singleton registry pre-populated with SeededRailAdapter and LoopAdapter
+// Default system singleton registry pre-populated with SeededRailAdapter (KES & USD) and LoopAdapter
 export const defaultAdapterRegistry = new AdapterRegistry();
-defaultAdapterRegistry.register('seeded', new SeededRailAdapter());
+defaultAdapterRegistry.register('seeded', new SeededRailAdapter('seeded', 'KES'));
+defaultAdapterRegistry.register('seeded_2', new SeededRailAdapter('seeded_2', 'KES'));
 defaultAdapterRegistry.register('loop', new LoopAdapter());

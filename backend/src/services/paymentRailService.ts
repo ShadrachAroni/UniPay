@@ -78,6 +78,34 @@ function initDefaultRails(): void {
     updated_at: now,
   };
   inMemoryRails.set(loopRail.adapter_key.toLowerCase(), loopRail);
+
+  const seededSecondaryRail: PaymentRailEntity = {
+    id: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
+    name: 'PesaLink Rail (Simulated Fixture)',
+    adapter_key: 'seeded_2',
+    is_enabled: true,
+    supported_currencies: ['KES'],
+    supported_countries: ['KE'],
+    min_amount: 10.0,
+    max_amount: 1000000.0,
+    capabilities_json: {
+      collection: true,
+      statusInquiry: true,
+      refund: true,
+      disbursement: true,
+      webhooks: true,
+      supportedCurrencies: ['KES'],
+      supportedCountries: ['KE'],
+      settlementEstimate: 'instant',
+      feeStructure: {
+        fixed: 0,
+        percentage: 0.005,
+      },
+    },
+    created_at: now,
+    updated_at: now,
+  };
+  inMemoryRails.set(seededSecondaryRail.adapter_key.toLowerCase(), seededSecondaryRail);
 }
 
 // Initialize default seeded and loop rails
