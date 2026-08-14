@@ -5,6 +5,8 @@ import { getEnabledRailsFor } from '../services/paymentRailService';
 import { defaultAdapterRegistry } from '../adapters/adapter-registry';
 import { rootLogger } from '../utils/logger';
 
+import { calculateCollectionFee } from '../services/feeService';
+
 export const checkoutRouter = Router();
 
 const paymentOptionsSchema = z.object({
@@ -60,11 +62,7 @@ checkoutRouter.post(
       const adapter = defaultAdapterRegistry.get(primaryRail.adapter_key);
       const capabilities = adapter.capabilities();
 
-      const feeStructure = capabilities.feeStructure || { fixed: 0, percentage: 0.005 };
-      const estimatedFee = Number(
-        ((feeStructure.fixed || 0) + amount * (feeStructure.percentage || 0)).toFixed(2)
-      );
-      const estimatedRecipientAmount = Number((amount - estimatedFee).toFixed(2));
+      const feeBreakdown = calculateCollectionFee(amount, primaryRail.adapter_key, currency);
       const settlementEstimate = capabilities.settlementEstimate || 'instant';
 
       req.logger.info('Resolved checkout payment options', {
@@ -79,10 +77,12 @@ checkoutRouter.post(
       res.status(200).json({
         provider: adapter.name(),
         rail: 'request_to_pay',
-        amount,
-        currency,
-        estimated_fee: estimatedFee,
-        estimated_recipient_amount: estimatedRecipientAmount,
+        amount: feeBreakdown.amount,
+        currency: feeBreakdown.currency,
+        estimated_fee: feeBreakdown.total_fee,
+        provider_fee: feeBreakdown.provider_fee,
+        platform_fee: feeBreakdown.platform_fee,
+        estimated_recipient_amount: feeBreakdown.net_amount,
         settlement_estimate: settlementEstimate,
         recipient: {
           display_name: recipient.profile.display_name,

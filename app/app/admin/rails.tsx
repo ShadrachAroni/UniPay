@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { useToast } from '../../components/ui/Toast';
 import { X, CreditCard, RefreshCw, Sliders, ShieldCheck } from 'lucide-react-native';
 
 interface RailItem {
@@ -27,6 +28,7 @@ interface RailItem {
 
 export default function AdminRailsScreen() {
   const { tokens, isDark, activeColors } = useTheme();
+  const { showToast } = useToast();
   const [rails, setRails] = useState<RailItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRail, setEditingRail] = useState<RailItem | null>(null);
@@ -34,10 +36,12 @@ export default function AdminRailsScreen() {
   const [editFeePercentage, setEditFeePercentage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchRails = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/admin/payment-rails', {
+      const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails`, {
         headers: { Authorization: 'Bearer admin_super_demo' },
       });
       if (res.ok) {
@@ -84,7 +88,7 @@ export default function AdminRailsScreen() {
 
   const handleToggleRail = async (rail: RailItem, nextEnabled: boolean) => {
     try {
-      await fetch(`/api/v1/admin/payment-rails/${rail.adapter_key}`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails/${rail.adapter_key}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -92,9 +96,14 @@ export default function AdminRailsScreen() {
         },
         body: JSON.stringify({ is_enabled: nextEnabled }),
       });
+      if (res.ok) {
+        showToast(`Rail ${rail.name} ${nextEnabled ? 'enabled' : 'disabled'}`, 'success');
+      } else {
+        showToast('Failed to update rail status', 'error');
+      }
       fetchRails();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showToast(err.message || 'Error updating rail', 'error');
     }
   };
 
@@ -103,7 +112,7 @@ export default function AdminRailsScreen() {
     setActionLoading(true);
     try {
       const pct = parseFloat(editFeePercentage) / 100;
-      await fetch(`/api/v1/admin/payment-rails/${editingRail.adapter_key}`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails/${editingRail.adapter_key}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -111,8 +120,15 @@ export default function AdminRailsScreen() {
         },
         body: JSON.stringify({ fee_percentage: pct }),
       });
-      setEditModalVisible(false);
-      fetchRails();
+      if (res.ok) {
+        setEditModalVisible(false);
+        showToast(`Updated fee for ${editingRail.name}`, 'success');
+        fetchRails();
+      } else {
+        showToast('Failed to update rail configuration', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error updating configuration', 'error');
     } finally {
       setActionLoading(false);
     }

@@ -6,6 +6,7 @@ import { listTransactions, TransactionEntity } from './transactionService';
 import { getMoneyDirectionRules } from './moneyDirectionService';
 import { rootLogger } from '../utils/logger';
 import { MoneyDirectionDecision, PayoutStatus } from '@unipay/shared';
+import { calculateDisbursementFee } from './feeService';
 
 export interface PayoutEntity {
   id: string;
@@ -221,8 +222,9 @@ export async function createPayout(
 
   const currency = input.currency || profile.currency || 'KES';
   const provider = input.provider || 'loop';
-  const fee = 0.00;
-  const netAmount = Math.round((input.amount - fee) * 100) / 100;
+  const feeResult = calculateDisbursementFee(input.amount, destinationType, currency);
+  const fee = feeResult.total_fee;
+  const netAmount = feeResult.net_amount;
   const now = new Date().toISOString();
   const payoutId = crypto.randomUUID();
 

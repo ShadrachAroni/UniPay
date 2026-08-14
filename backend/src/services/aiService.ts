@@ -186,7 +186,7 @@ export class AnthropicLLMProvider implements LLMProvider {
 
   constructor(apiKey?: string, model?: string) {
     this.apiKey = apiKey || process.env.ANTHROPIC_API_KEY;
-    this.model = model || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
+    this.model = model || process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
   }
 
   async generateText(

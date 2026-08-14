@@ -101,3 +101,111 @@ export function PaymentStatusSkeleton() {
     </View>
   );
 }
+
+export function TransactionListSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <View style={{ gap: 12 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 14,
+            borderRadius: 12,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+          }}
+        >
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton width="50%" height={16} />
+            <Skeleton width="30%" height={12} />
+          </View>
+          <View style={{ alignItems: 'flex-end', gap: 6 }}>
+            <Skeleton width={70} height={16} />
+            <Skeleton width={50} height={12} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function MetricsSkeleton() {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            flex: 1,
+            minWidth: 140,
+            padding: 16,
+            borderRadius: 16,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            gap: 8,
+          }}
+        >
+          <Skeleton width="60%" height={12} />
+          <Skeleton width="80%" height={24} />
+          <Skeleton width="40%" height={10} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function ExceptionListSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <View style={{ gap: 10 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            gap: 8,
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Skeleton width="40%" height={14} />
+            <Skeleton width={60} height={18} borderRadius={10} />
+          </View>
+          <Skeleton width="70%" height={12} />
+          <Skeleton width="30%" height={10} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function PayoutListSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <View style={{ gap: 10 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 14,
+            borderRadius: 12,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+          }}
+        >
+          <View style={{ gap: 6, flex: 1 }}>
+            <Skeleton width="45%" height={14} />
+            <Skeleton width="30%" height={12} />
+          </View>
+          <View style={{ alignItems: 'flex-end', gap: 6 }}>
+            <Skeleton width={80} height={16} />
+            <Skeleton width={55} height={14} borderRadius={8} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+

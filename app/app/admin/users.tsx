@@ -8,6 +8,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchBar } from '../../components/ui/SearchBar';
+import { useToast } from '../../components/ui/Toast';
 import { Profile } from '@unipay/shared';
 import {
   Shield,
@@ -22,6 +23,7 @@ import {
 
 export default function AdminUsersScreen() {
   const { tokens, isDark, activeColors } = useTheme();
+  const { showToast } = useToast();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -31,10 +33,12 @@ export default function AdminUsersScreen() {
   const [reviewerNote, setReviewerNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      let url = `/api/v1/admin/users?limit=50`;
+      let url = `${apiUrl}/api/v1/admin/users?limit=50`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (statusFilter !== 'all') url += `&verification_status=${statusFilter}`;
 
@@ -113,7 +117,7 @@ export default function AdminUsersScreen() {
     if (!selectedUser) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/v1/admin/users/${selectedUser.id}/identity/review`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/users/${selectedUser.id}/identity/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,8 +132,14 @@ export default function AdminUsersScreen() {
       if (res.ok) {
         setReviewModalVisible(false);
         setReviewerNote('');
+        showToast(`User verification updated: ${decision.toUpperCase()}`, 'success');
         fetchUsers();
+      } else {
+        const errData = await res.json();
+        showToast(errData.message || 'Action failed', 'error');
       }
+    } catch (err: any) {
+      showToast(err.message || 'Network error updating user', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -159,7 +169,7 @@ export default function AdminUsersScreen() {
           <SearchBar
             placeholder="Search by name, email, phone or ID..."
             value={search}
-            onChangeText={(text) => {
+            onChangeText={(text: string) => {
               setSearch(text);
               fetchUsers();
             }}

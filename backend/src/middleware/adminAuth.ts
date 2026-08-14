@@ -41,8 +41,8 @@ export function requireAdminRole(allowedRoles: AdminRole[]) {
         return;
       }
 
-      // 3. Check role authorization
-      if (!allowedRoles.includes(adminUser.role)) {
+      // 3. Check role authorization (super_admin has full unrestricted access to all capabilities §16)
+      if (adminUser.role !== 'super_admin' && !allowedRoles.includes(adminUser.role)) {
         res.status(403).json({
           error: 'Forbidden',
           message: `Access denied: role '${adminUser.role}' lacks permission for this action (required: ${allowedRoles.join(', ')})`,

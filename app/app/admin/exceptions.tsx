@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { useToast } from '../../components/ui/Toast';
 import { ReconciliationException } from '@unipay/shared';
 import {
   AlertTriangle,
@@ -17,6 +18,7 @@ import {
 
 export default function AdminExceptionsScreen() {
   const { tokens, isDark, activeColors } = useTheme();
+  const { showToast } = useToast();
   const [exceptions, setExceptions] = useState<ReconciliationException[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -25,10 +27,12 @@ export default function AdminExceptionsScreen() {
   const [actionNotes, setActionNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchExceptions = async () => {
     setLoading(true);
     try {
-      let url = '/api/v1/admin/exceptions?limit=50';
+      let url = `${apiUrl}/api/v1/admin/exceptions?limit=50`;
       if (categoryFilter !== 'all') url += `&category=${categoryFilter}`;
 
       const res = await fetch(url, {
@@ -87,7 +91,7 @@ export default function AdminExceptionsScreen() {
     if (!selectedException) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/v1/admin/exceptions/${selectedException.id}/action`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/exceptions/${selectedException.id}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,8 +102,13 @@ export default function AdminExceptionsScreen() {
       if (res.ok) {
         setActionModalVisible(false);
         setActionNotes('');
+        showToast(`Exception marked as ${action === 'resolve' ? 'Resolved' : 'Escalated'}`, 'success');
         fetchExceptions();
+      } else {
+        showToast('Failed to update exception', 'error');
       }
+    } catch (err: any) {
+      showToast(err.message || 'Error updating exception', 'error');
     } finally {
       setActionLoading(false);
     }

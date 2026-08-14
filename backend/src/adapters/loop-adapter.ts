@@ -21,6 +21,7 @@ export interface LoopAdapterOptions {
   merchantTill?: string;
   secretKey?: string;
   callBackUrl?: string;
+  timeoutMs?: number;
 }
 
 export function generateLoopHmacSignature(
@@ -44,6 +45,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
   private readonly merchantTill: string;
   private readonly secretKey: string;
   private readonly callBackUrl: string;
+  private readonly timeoutMs: number;
 
   // Simulation and testing hooks
   private simulateFailure = false;
@@ -75,6 +77,9 @@ export class LoopAdapter implements PaymentProviderAdapter {
       options.callBackUrl ||
       process.env.LOOP_CALLBACK_URL ||
       'https://sandbox.unipay.co.ke/api/v1/webhooks/loop';
+    this.timeoutMs =
+      options.timeoutMs ??
+      (process.env.LOOP_TIMEOUT_MS ? parseInt(process.env.LOOP_TIMEOUT_MS, 10) : 5000);
   }
 
   name(): string {
@@ -149,7 +154,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
           'x-request-id': currentTrace,
         },
         body: 'grant_type=client_credentials',
-        signal: AbortSignal.timeout(500),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
 
       if (res.ok) {
@@ -223,7 +228,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
           'x-request-id': traceId,
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(500),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
 
       if (res.ok) {
@@ -329,7 +334,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
             'x-request-id': providerReference,
           },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(500),
+          signal: AbortSignal.timeout(this.timeoutMs),
         }
       );
       if (res.ok) {
@@ -448,7 +453,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
             'x-request-id': traceId,
           },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(500),
+          signal: AbortSignal.timeout(this.timeoutMs),
         }
       );
 

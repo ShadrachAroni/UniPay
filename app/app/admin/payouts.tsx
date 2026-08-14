@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
+import { useToast } from '../../components/ui/Toast';
 import { Payout, Dispute } from '@unipay/shared';
 import {
   CreditCard,
@@ -18,6 +19,7 @@ import {
 
 export default function AdminPayoutsScreen() {
   const { tokens, isDark, activeColors } = useTheme();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'payouts' | 'disputes'>('payouts');
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
@@ -32,11 +34,13 @@ export default function AdminPayoutsScreen() {
   const [disputeModalVisible, setDisputeModalVisible] = useState(false);
   const [disputeNotes, setDisputeNotes] = useState('');
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchData = async () => {
     setLoading(true);
     try {
       if (activeTab === 'payouts') {
-        const res = await fetch('/api/v1/admin/payouts?limit=50', {
+        const res = await fetch(`${apiUrl}/api/v1/admin/payouts?limit=50`, {
           headers: { Authorization: 'Bearer admin_super_demo' },
         });
         if (res.ok) {
@@ -44,7 +48,7 @@ export default function AdminPayoutsScreen() {
           setPayouts(data.payouts || []);
         }
       } else {
-        const res = await fetch('/api/v1/admin/disputes?limit=50', {
+        const res = await fetch(`${apiUrl}/api/v1/admin/disputes?limit=50`, {
           headers: { Authorization: 'Bearer admin_super_demo' },
         });
         if (res.ok) {
@@ -98,7 +102,7 @@ export default function AdminPayoutsScreen() {
     if (!selectedPayout) return;
     setActionLoading(true);
     try {
-      await fetch(`/api/v1/admin/payouts/${selectedPayout.id}/intervene`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/payouts/${selectedPayout.id}/intervene`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,9 +110,16 @@ export default function AdminPayoutsScreen() {
         },
         body: JSON.stringify({ action, reason: payoutReason }),
       });
-      setPayoutModalVisible(false);
-      setPayoutReason('');
-      fetchData();
+      if (res.ok) {
+        setPayoutModalVisible(false);
+        setPayoutReason('');
+        showToast(`Payout action '${action}' completed successfully`, 'success');
+        fetchData();
+      } else {
+        showToast('Failed to perform payout intervention', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error during payout intervention', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -118,7 +129,7 @@ export default function AdminPayoutsScreen() {
     if (!selectedDispute) return;
     setActionLoading(true);
     try {
-      await fetch(`/api/v1/admin/disputes/${selectedDispute.id}/resolve`, {
+      const res = await fetch(`${apiUrl}/api/v1/admin/disputes/${selectedDispute.id}/resolve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,9 +137,16 @@ export default function AdminPayoutsScreen() {
         },
         body: JSON.stringify({ decision, resolution_notes: disputeNotes }),
       });
-      setDisputeModalVisible(false);
-      setDisputeNotes('');
-      fetchData();
+      if (res.ok) {
+        setDisputeModalVisible(false);
+        setDisputeNotes('');
+        showToast(`Dispute marked as ${decision === 'resolved_refund' ? 'Refunded' : 'Rejected'}`, 'success');
+        fetchData();
+      } else {
+        showToast('Failed to resolve dispute', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error resolving dispute', 'error');
     } finally {
       setActionLoading(false);
     }

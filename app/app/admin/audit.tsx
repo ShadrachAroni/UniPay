@@ -24,10 +24,12 @@ export default function AdminAuditScreen() {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchAuditLogs = async () => {
     setLoading(true);
     try {
-      let url = '/api/v1/admin/audit-logs?limit=50';
+      let url = `${apiUrl}/api/v1/admin/audit-logs?limit=50`;
       if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
 
       const res = await fetch(url, {

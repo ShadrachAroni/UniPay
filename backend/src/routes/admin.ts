@@ -15,6 +15,7 @@ import {
   createDispute,
   resolveDispute,
   getPlatformMetrics,
+  createOrUpdateAdminUser,
 } from '../services/adminService';
 import { queryAuditLogs } from '../services/auditLogService';
 import { listReconciliationExceptions } from '../services/reconciliationService';
@@ -578,3 +579,41 @@ adminRouter.get(
     }
   }
 );
+
+const createAdminUserSchema = z.object({
+  clerk_user_id: z.string().min(1),
+  role: z.enum(['super_admin', 'support', 'compliance_reviewer']),
+  permissions_json: z.record(z.boolean()).optional(),
+});
+
+/**
+ * POST /api/v1/admin/admins
+ * Assign / update admin roles. Strictly restricted to super_admin (§16).
+ */
+adminRouter.post(
+  '/admins',
+  requireAdminRole(['super_admin']),
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parseResult = createAdminUserSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: parseResult.error.issues[0]?.message || 'Invalid admin user payload',
+          details: parseResult.error.issues,
+          statusCode: 400,
+        });
+        return;
+      }
+
+      const admin = await createOrUpdateAdminUser(parseResult.data);
+      res.status(201).json({
+        admin,
+        message: `Admin role '${admin.role}' assigned to ${admin.clerk_user_id}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+

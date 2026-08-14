@@ -82,6 +82,7 @@ export async function createProfile(dto: CreateProfileDTO): Promise<Profile> {
 
     if (rows.length > 0) {
       inMemoryProfiles.set(rows[0].id, rows[0]);
+      syncProfileToClerkMetadata(dto.clerk_user_id, dto.account_type).catch(() => {});
       return rows[0];
     }
   } catch (err) {
@@ -98,7 +99,31 @@ export async function createProfile(dto: CreateProfileDTO): Promise<Profile> {
   }
 
   inMemoryProfiles.set(profile.id, profile);
+  syncProfileToClerkMetadata(dto.clerk_user_id, dto.account_type).catch(() => {});
   return profile;
+}
+
+async function syncProfileToClerkMetadata(clerkUserId: string, accountType: AccountType): Promise<void> {
+  if (!process.env.CLERK_SECRET_KEY || clerkUserId.startsWith('test_') || clerkUserId.startsWith('clerk_')) {
+    return;
+  }
+  try {
+    await fetch(`https://api.clerk.com/v1/users/${clerkUserId}/metadata`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        public_metadata: {
+          account_type: accountType,
+        },
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch (err) {
+    rootLogger.debug('Clerk metadata sync skipped or failed', { error: String(err) });
+  }
 }
 
 export async function getProfileById(id: string): Promise<Profile | null> {

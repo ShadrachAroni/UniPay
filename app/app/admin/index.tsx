@@ -27,9 +27,11 @@ export default function AdminOverviewScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [metrics, setMetrics] = useState<AdminPlatformMetrics | null>(null);
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('/api/v1/admin/metrics', {
+      const res = await fetch(`${apiUrl}/api/v1/admin/metrics`, {
         headers: { Authorization: 'Bearer admin_super_demo' },
       });
       if (res.ok) {
