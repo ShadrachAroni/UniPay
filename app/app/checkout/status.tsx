@@ -16,6 +16,8 @@ export default function GuestCheckoutStatusScreen() {
   const router = useRouter();
 
   const isSuccess = params.status !== 'failed';
+  const parsedAmount = parseFloat(params.amount || '0');
+  const safeAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : 0;
   const refNumber = params.intentId
     ? `MPESA_${params.intentId.toUpperCase()}`
     : 'MPESA_STK_99210';
@@ -83,7 +85,7 @@ export default function GuestCheckoutStatusScreen() {
                 Amount Paid
               </Text>
               <Text className="font-bold text-base text-emerald-600 dark:text-emerald-400">
-                KES {parseFloat(params.amount || '0').toLocaleString()}
+                KES {safeAmount.toLocaleString()}
               </Text>
             </View>
           </View>

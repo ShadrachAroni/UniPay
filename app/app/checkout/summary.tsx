@@ -34,11 +34,18 @@ export default function GuestCheckoutSummaryScreen() {
   const [payerPhone, setPayerPhone] = useState('+254 7');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [invalidAmount, setInvalidAmount] = useState(false);
 
   const rawAmount = parseFloat(params.amount || '0');
 
   useEffect(() => {
     async function loadFee() {
+      if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+        setInvalidAmount(true);
+        setLoading(false);
+        return;
+      }
+
       try {
         const estimate = await getFeeEstimate(rawAmount);
         setFeeBreakdown(estimate);
@@ -53,6 +60,9 @@ export default function GuestCheckoutSummaryScreen() {
 
   const handlePayNow = async () => {
     if (!payerPhone || payerPhone.length < 10) {
+      return;
+    }
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
       return;
     }
     setSubmitting(true);
@@ -79,10 +89,23 @@ export default function GuestCheckoutSummaryScreen() {
     }
   };
 
-  if (loading || !feeBreakdown) {
+  if (loading) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: activeColors.background }}>
         <ActivityIndicator size="large" color={tokens.colors.light.brand} />
+      </View>
+    );
+  }
+
+  if (invalidAmount || !feeBreakdown) {
+    return (
+      <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
+        <Header title="Payment Summary" showBack />
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="font-semibold" style={{ color: tokens.colors.semantic.error }}>
+            Invalid payment amount.
+          </Text>
+        </View>
       </View>
     );
   }

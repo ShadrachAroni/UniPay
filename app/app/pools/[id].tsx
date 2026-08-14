@@ -16,6 +16,7 @@ export default function PoolDetailScreen() {
   const [pool, setPool] = useState<PaymentPool | null>(null);
   const [contributions, setContributions] = useState<PoolContribution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -28,6 +29,7 @@ export default function PoolDetailScreen() {
         setContributions(contribData);
       } catch (error) {
         console.error(error);
+        setError('Pool not found');
       } finally {
         setLoading(false);
       }
@@ -35,10 +37,23 @@ export default function PoolDetailScreen() {
     load();
   }, [id]);
 
-  if (loading || !pool) {
+  if (loading) {
     return (
       <View className="flex-1 justify-center items-center" style={{ backgroundColor: activeColors.background }}>
         <ActivityIndicator size="large" color={tokens.colors.light.brand} />
+      </View>
+    );
+  }
+
+  if (error || !pool) {
+    return (
+      <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
+        <Header title="Pool Details" />
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="font-semibold" style={{ color: tokens.colors.semantic.error }}>
+            {error || 'Pool not found'}
+          </Text>
+        </View>
       </View>
     );
   }

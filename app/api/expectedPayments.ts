@@ -40,13 +40,13 @@ export async function getExpectedPayments(): Promise<ExpectedPayment[]> {
 }
 
 export async function getExpectedPayment(id: string): Promise<ExpectedPayment> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
       const found = MOCK_EXPECTED.find((ep) => ep.id === id);
       if (found) {
         resolve(found);
       } else {
-        resolve(MOCK_EXPECTED[0]);
+        reject(new Error('Not found'));
       }
     }, 300);
   });
