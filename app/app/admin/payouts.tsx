@@ -7,6 +7,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { Payout, Dispute } from '@unipay/shared';
 import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
@@ -37,11 +38,15 @@ export default function AdminPayoutsScreen() {
   const [disputeModalVisible, setDisputeModalVisible] = useState(false);
   const [disputeNotes, setDisputeNotes] = useState('');
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const utcRange = dateRange.startDate && dateRange.endDate
         ? toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours())
         : null;
@@ -52,7 +57,7 @@ export default function AdminPayoutsScreen() {
           url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
         }
         const res = await fetch(url, {
-          headers: { Authorization: 'Bearer admin_super_demo' },
+          headers: await getAuthHeaders(),
         });
         if (res.ok) {
           const data = await res.json();
@@ -64,7 +69,7 @@ export default function AdminPayoutsScreen() {
           url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
         }
         const res = await fetch(url, {
-          headers: { Authorization: 'Bearer admin_super_demo' },
+          headers: await getAuthHeaders(),
         });
         if (res.ok) {
           const data = await res.json();
@@ -117,12 +122,13 @@ export default function AdminPayoutsScreen() {
     if (!selectedPayout) return;
     setActionLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/payouts/${selectedPayout.id}/intervene`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ action, reason: payoutReason }),
       });
       if (res.ok) {
@@ -144,12 +150,13 @@ export default function AdminPayoutsScreen() {
     if (!selectedDispute) return;
     setActionLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/disputes/${selectedDispute.id}/resolve`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ decision, resolution_notes: disputeNotes }),
       });
       if (res.ok) {

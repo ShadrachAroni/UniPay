@@ -7,6 +7,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { AuditLog } from '@unipay/shared';
 import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
@@ -27,11 +28,15 @@ export default function AdminAuditScreen() {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchAuditLogs = async () => {
     setLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       let url = `${apiUrl}/api/v1/admin/audit-logs?limit=50`;
       if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
       if (dateRange.startDate && dateRange.endDate) {
@@ -40,7 +45,7 @@ export default function AdminAuditScreen() {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: 'Bearer admin_super_demo' },
+        headers: await getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();

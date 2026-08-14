@@ -34,35 +34,6 @@ const inMemoryPayoutOverrides = new Map<string, { status: string; remarks?: stri
 // -------------------------------------------------------------
 
 export async function getAdminUserByClerkId(clerkUserId: string): Promise<AdminUser | null> {
-  // Test token convention mappings
-  if (clerkUserId.startsWith('admin_super_') || clerkUserId === 'admin_super' || clerkUserId === 'super_admin') {
-    return {
-      id: 'admin-super-id',
-      clerk_user_id: clerkUserId,
-      role: 'super_admin',
-      permissions_json: { all: true },
-      created_at: new Date().toISOString(),
-    };
-  }
-  if (clerkUserId.startsWith('admin_support_') || clerkUserId === 'admin_support' || clerkUserId === 'support_user') {
-    return {
-      id: 'admin-support-id',
-      clerk_user_id: clerkUserId,
-      role: 'support',
-      permissions_json: { read_all: true, resolve_exceptions: true },
-      created_at: new Date().toISOString(),
-    };
-  }
-  if (clerkUserId.startsWith('admin_compliance_') || clerkUserId === 'admin_compliance' || clerkUserId === 'compliance_user') {
-    return {
-      id: 'admin-compliance-id',
-      clerk_user_id: clerkUserId,
-      role: 'compliance_reviewer',
-      permissions_json: { kyc_review: true, disputes: true, read_all: true },
-      created_at: new Date().toISOString(),
-    };
-  }
-
   try {
     const { rows } = await pool.query(
       `SELECT * FROM admin_users WHERE clerk_user_id = $1 LIMIT 1`,

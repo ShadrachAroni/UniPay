@@ -54,7 +54,11 @@ export default function IndexScreen() {
   const { tokens, isDark, activeColors } = useTheme();
   const { showToast } = useToast();
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    throw new Error('Missing EXPO_PUBLIC_API_URL environment variable.');
+  }
 
   // Profile & Verification state
   const [profile, setProfile] = useState<Profile | null>(null);

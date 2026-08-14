@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { useToast } from '../../components/ui/Toast';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { X, CreditCard, RefreshCw, Sliders, ShieldCheck } from 'lucide-react-native';
 
 interface RailItem {
@@ -36,13 +37,17 @@ export default function AdminRailsScreen() {
   const [editFeePercentage, setEditFeePercentage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchRails = async () => {
     setLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails`, {
-        headers: { Authorization: 'Bearer admin_super_demo' },
+        headers: await getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -88,12 +93,13 @@ export default function AdminRailsScreen() {
 
   const handleToggleRail = async (rail: RailItem, nextEnabled: boolean) => {
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails/${rail.adapter_key}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ is_enabled: nextEnabled }),
       });
       if (res.ok) {
@@ -111,13 +117,14 @@ export default function AdminRailsScreen() {
     if (!editingRail) return;
     setActionLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const pct = parseFloat(editFeePercentage) / 100;
       const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails/${editingRail.adapter_key}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ fee_percentage: pct }),
       });
       if (res.ok) {

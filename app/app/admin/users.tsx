@@ -10,6 +10,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { Profile } from '@unipay/shared';
 import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
@@ -36,11 +37,15 @@ export default function AdminUsersScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       let url = `${apiUrl}/api/v1/admin/users?limit=50`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (statusFilter !== 'all') url += `&verification_status=${statusFilter}`;
@@ -50,7 +55,7 @@ export default function AdminUsersScreen() {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: 'Bearer admin_super_demo' },
+        headers: await getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -124,12 +129,13 @@ export default function AdminUsersScreen() {
     if (!selectedUser) return;
     setActionLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/users/${selectedUser.id}/identity/review`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           decision,
           reviewer_note: reviewerNote,

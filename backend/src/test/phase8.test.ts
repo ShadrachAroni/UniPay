@@ -81,7 +81,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_support_demo',
+          Authorization: 'Bearer clerk_admin_support',
         },
         body: JSON.stringify({ is_enabled: false }),
       });
@@ -107,7 +107,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_support_demo',
+          Authorization: 'Bearer clerk_admin_support',
         },
         body: JSON.stringify({ decision: 'approved' }),
       });
@@ -122,7 +122,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({ is_enabled: false }),
       });
@@ -170,7 +170,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({ is_enabled: false }),
       });
@@ -194,7 +194,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({ is_enabled: false }),
       });
@@ -216,7 +216,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({ is_enabled: true }),
       });
@@ -239,7 +239,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({ is_enabled: true }),
       });
@@ -276,7 +276,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_compliance_demo',
+          Authorization: 'Bearer clerk_admin_compliance',
         },
         body: JSON.stringify({
           decision: 'approved',
@@ -300,7 +300,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({
           fee_percentage: 0.008,
@@ -322,7 +322,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_support_demo',
+          Authorization: 'Bearer clerk_admin_support',
         },
         body: JSON.stringify({
           action: 'resolve',
@@ -381,7 +381,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
+          Authorization: 'Bearer clerk_admin_super',
         },
         body: JSON.stringify({
           action: 'retry',
@@ -413,7 +413,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_support_demo',
+          Authorization: 'Bearer clerk_admin_support',
         },
         body: JSON.stringify({
           profile_id: profile.id,
@@ -431,7 +431,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_compliance_demo',
+          Authorization: 'Bearer clerk_admin_compliance',
         },
         body: JSON.stringify({
           decision: 'resolved_refund',
@@ -481,7 +481,7 @@ describe('Phase 8 Verification Test Suite — Admin Module, Role-Gating & Audit 
       );
 
       const res = await fetch(`${baseUrl}/api/v1/admin/metrics`, {
-        headers: { Authorization: 'Bearer admin_support_demo' },
+        headers: { Authorization: 'Bearer clerk_admin_support' },
       });
       assert.strictEqual(res.status, 200);
       const data: any = await res.json();

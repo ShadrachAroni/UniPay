@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ThemeToggle } from '../../theme/ThemeToggle';
 import {
@@ -36,10 +37,40 @@ export default function AdminLayout() {
   const { isSignedIn, isLoaded } = useAuth();
   const { tokens, isDark, activeColors } = useTheme();
   const [adminRole, setAdminRole] = useState<'super_admin' | 'support' | 'compliance_reviewer' | null>(null);
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   useEffect(() => {
-    setAdminRole('super_admin');
-  }, [isSignedIn, isLoaded]);
+    const fetchAdminContext = async () => {
+      if (!isLoaded || !isSignedIn || !apiUrl) {
+        setAdminRole(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiUrl}/api/v1/admin/me`, {
+          headers: await getAuthHeaders(),
+        });
+
+        if (!res.ok) {
+          setAdminRole(null);
+          return;
+        }
+
+        const data = await res.json();
+        const role = data?.admin_user?.role;
+
+        if (role === 'super_admin' || role === 'support' || role === 'compliance_reviewer') {
+          setAdminRole(role);
+        } else {
+          setAdminRole(null);
+        }
+      } catch {
+        setAdminRole(null);
+      }
+    };
+
+    fetchAdminContext();
+  }, [apiUrl, getAuthHeaders, isSignedIn, isLoaded]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: activeColors.background }}>
@@ -87,7 +118,7 @@ export default function AdminLayout() {
             style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
           >
             <Text className="text-xs font-semibold" style={{ color: tokens.colors.semantic.success }}>
-              {adminRole || 'super_admin'}
+              {adminRole || 'loading...'}
             </Text>
           </View>
         </View>

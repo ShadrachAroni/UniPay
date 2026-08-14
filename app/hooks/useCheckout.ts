@@ -56,7 +56,7 @@ function generateIdempotencyKey(): string {
 }
 
 export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutProps) {
-  const apiUrl = apiBaseUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiUrl = apiBaseUrl || process.env.EXPO_PUBLIC_API_URL;
 
   // Core checkout state
   const [step, setStep] = useState<CheckoutStep>('alias_lookup');
@@ -94,6 +94,12 @@ export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutPro
 
   // 1. Resolve Alias
   const fetchRecipient = useCallback(async () => {
+    if (!apiUrl) {
+      setRecipientError('Missing EXPO_PUBLIC_API_URL environment variable.');
+      setLoadingRecipient(false);
+      return;
+    }
+
     if (!alias) {
       setRecipientError('Alias parameter is required');
       setLoadingRecipient(false);
@@ -144,6 +150,12 @@ export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutPro
   // 2. Fetch Fee Transparency Options on Amount Change (§13)
   const fetchPaymentOptions = useCallback(
     async (amtValue: string) => {
+      if (!apiUrl) {
+        setOptionError('Missing EXPO_PUBLIC_API_URL environment variable.');
+        setPaymentOption(null);
+        return;
+      }
+
       const numAmt = parseFloat(amtValue);
       if (isNaN(numAmt) || numAmt <= 0) {
         setPaymentOption(null);
@@ -193,6 +205,11 @@ export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutPro
     async (intentId: string) => {
       if (!isMountedRef.current) return;
 
+      if (!apiUrl) {
+        setPaymentError('Missing EXPO_PUBLIC_API_URL environment variable.');
+        return;
+      }
+
       try {
         const res = await fetch(`${apiUrl}/api/v1/payment-intents/${intentId}`);
         if (res.ok) {
@@ -225,6 +242,11 @@ export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutPro
 
   // 4. Initiate Payment Intent
   const initiatePayment = async () => {
+    if (!apiUrl) {
+      setPaymentError('Missing EXPO_PUBLIC_API_URL environment variable.');
+      return;
+    }
+
     const numAmt = parseFloat(amount);
     if (isNaN(numAmt) || numAmt <= 0) {
       setPaymentError('Please enter a valid payment amount');
@@ -282,6 +304,11 @@ export function useCheckout({ alias, initialAmount, apiBaseUrl }: UseCheckoutPro
 
   // 5. Retry Payment Intent on Failure (reuses same intent & key)
   const retryPayment = async () => {
+    if (!apiUrl) {
+      setPaymentError('Missing EXPO_PUBLIC_API_URL environment variable.');
+      return;
+    }
+
     if (!paymentIntent?.id) {
       // Re-initiate if no intent exists
       initiatePayment();

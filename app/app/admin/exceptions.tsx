@@ -7,6 +7,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useToast } from '../../components/ui/Toast';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { ReconciliationException } from '@unipay/shared';
 import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
@@ -30,11 +31,15 @@ export default function AdminExceptionsScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchExceptions = async () => {
     setLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       let url = `${apiUrl}/api/v1/admin/exceptions?limit=50`;
       if (categoryFilter !== 'all') url += `&category=${categoryFilter}`;
       if (dateRange.startDate && dateRange.endDate) {
@@ -43,7 +48,7 @@ export default function AdminExceptionsScreen() {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: 'Bearer admin_super_demo' },
+        headers: await getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -98,12 +103,13 @@ export default function AdminExceptionsScreen() {
     if (!selectedException) return;
     setActionLoading(true);
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       const res = await fetch(`${apiUrl}/api/v1/admin/exceptions/${selectedException.id}/action`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer admin_super_demo',
-        },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ action, notes: actionNotes }),
       });
       if (res.ok) {

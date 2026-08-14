@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Chip } from '../../components/ui/Chip';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { useAdminApi } from '../../hooks/useAdminApi';
 import { AdminPlatformMetrics } from '@unipay/shared';
 import { DateRange, getDeviceTimezoneOffsetHours, getPresetRange, toUTCRange } from '../../utils/dateUtils';
 import {
@@ -30,10 +31,14 @@ export default function AdminOverviewScreen() {
   const [metrics, setMetrics] = useState<AdminPlatformMetrics | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+  const { apiUrl, getAuthHeaders } = useAdminApi();
 
   const fetchMetrics = async () => {
     try {
+      if (!apiUrl) {
+        throw new Error('EXPO_PUBLIC_API_URL is not configured');
+      }
+
       let url = `${apiUrl}/api/v1/admin/metrics`;
       if (dateRange.startDate && dateRange.endDate) {
         const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
@@ -41,7 +46,7 @@ export default function AdminOverviewScreen() {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: 'Bearer admin_super_demo' },
+        headers: await getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();

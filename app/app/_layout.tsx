@@ -32,9 +32,11 @@ const tokenCache = {
   },
 };
 
-const publishableKey =
-  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
-  'pk_test_placeholder_unipay_phase0';
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable.');
+}
 
 function NavigationStack() {
   const { isDark, tokens } = useTheme();
