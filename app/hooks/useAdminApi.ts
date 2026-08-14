@@ -1,4 +1,4 @@
-import { useAuth } from '@clerk/expo';
+import { useAuth } from '@clerk/clerk-expo';
 
 export function useAdminApi() {
   const { getToken } = useAuth();

@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/expo": "^2.6.14",
+    "@clerk/clerk-expo": "^2.6.14",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@unipay/shared": "*",
     "expo": "~52.0.0",
