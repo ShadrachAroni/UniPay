@@ -29,11 +29,8 @@ stubsRouter.get('/transactions', createStubHandler(3, 'List ledger transactions 
 stubsRouter.get('/exports/transactions.csv', createStubHandler(3, 'Export transaction ledger as CSV'));
 
 // Phase 4 & 5: Balances, Money Direction & Payouts
-// /profiles/:id/money-direction is implemented live in profiles.ts
-stubsRouter.get('/profiles/:id/balance', createStubHandler(4, 'Query profile available and ledger balance'));
-stubsRouter.post('/payouts', createStubHandler(4, 'Initiate manual or scheduled payout'));
-stubsRouter.get('/payouts/:id', createStubHandler(4, 'Get payout status'));
-stubsRouter.get('/payouts', createStubHandler(4, 'List historical payouts'));
+// /profiles/:id/money-direction & /profiles/:id/balance are implemented live in profiles.ts
+// /payouts, /payouts/:id are implemented live in payouts.ts
 
 // Phase 4B / Phase 5: AI Queries & Support Assistant
 // /ai/query is live in ai.ts

@@ -31,7 +31,13 @@ export type PaymentStatus =
   | 'reversed'
   | 'partially_refunded';
 
-export type PayoutStatus = 'pending' | 'processing' | 'success' | 'failed';
+export type PayoutStatus =
+  | 'requested'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'pending'
+  | 'success';
 
 export type MoneyDirectionDestinationType =
   | 'balance'
@@ -138,13 +144,21 @@ export interface Transaction {
 export interface Payout {
   id: string;
   profile_id: string;
-  destination_type: 'mpesa_phone' | 'bank_account' | 'loop_account';
-  destination_reference: string;
-  amount: number;
-  currency: 'KES';
+  provider: string;
+  requested_amount: number;
+  requested_currency: string;
+  destination_type: string;
+  destination_reference: string | null;
+  fee: number;
+  net_amount: number;
   status: PayoutStatus;
-  created_at: string;
-  updated_at: string;
+  provider_reference?: string | null;
+  requested_at: string;
+  processed_at?: string | null;
+  raw_payload?: unknown;
+  idempotency_key: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type ReconciliationMatchType =

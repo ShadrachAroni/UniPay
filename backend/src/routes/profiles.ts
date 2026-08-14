@@ -13,6 +13,7 @@ import {
   getMoneyDirectionRules,
   setMoneyDirectionRules,
 } from '../services/moneyDirectionService';
+import { calculateProfileBalance } from '../services/payoutService';
 
 export const profilesRouter = Router();
 
@@ -463,3 +464,50 @@ profilesRouter.put(
     }
   }
 );
+
+/**
+ * GET /api/v1/profiles/:id/balance
+ * Query profile available-to-withdraw and ledger balance (§18)
+ */
+profilesRouter.get(
+  '/:id/balance',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = getParamId(req.params.id);
+      const profile = await getProfileById(id);
+      if (!profile) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: 'Profile not found',
+          statusCode: 404,
+        });
+        return;
+      }
+
+      // Authentication & Ownership enforcement (§18)
+      if (!req.userId) {
+        res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required to view profile balance',
+          statusCode: 401,
+        });
+        return;
+      }
+
+      if (profile.clerk_user_id !== req.userId) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'You are not authorized to view balance for this profile',
+          statusCode: 403,
+        });
+        return;
+      }
+
+      const balance = await calculateProfileBalance(id);
+      res.status(200).json(balance);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+

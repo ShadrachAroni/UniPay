@@ -7,6 +7,7 @@ import { paymentIntentsRouter } from './paymentIntents';
 import { webhooksRouter } from './webhooks';
 import { reconciliationRouter } from './reconciliation';
 import { aiRouter } from './ai';
+import { payoutsRouter } from './payouts';
 import { stubsRouter } from './stubs';
 
 export const apiRouter = Router();
@@ -30,6 +31,9 @@ apiRouter.use('/api/v1/reconciliation', reconciliationRouter);
 
 // Phase 4B Live Endpoints: AI Intelligence & Natural-Language Queries
 apiRouter.use('/api/v1/ai', aiRouter);
+
+// Phase 6 Live Endpoints: Payouts & Disbursements
+apiRouter.use('/api/v1/payouts', payoutsRouter);
 
 // §18 & Phase 4B API Endpoints stubs mounted at /api/v1
 apiRouter.use('/api/v1', stubsRouter);

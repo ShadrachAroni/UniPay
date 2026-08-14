@@ -357,10 +357,23 @@ export async function onSettlementTransition(
     settled_amount: settledAmount,
   });
 
-  return evaluateMoneyDirection(
+  const decision = await evaluateMoneyDirection(
     transaction.recipient_profile_id,
     settledAmount
   );
+
+  // Trigger automatic payouts for non-balance allocations (§12, §17)
+  try {
+    const { processAutomaticDisbursements } = await import('./payoutService');
+    await processAutomaticDisbursements(decision, transaction);
+  } catch (err) {
+    rootLogger.error('Error executing automatic disbursements on settlement hook', {
+      transaction_id: transaction.id,
+      error: (err as Error).message,
+    });
+  }
+
+  return decision;
 }
 
 export function getEvaluationHistory(): MoneyDirectionDecision[] {
