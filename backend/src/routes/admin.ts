@@ -617,3 +617,26 @@ adminRouter.post(
   }
 );
 
+/**
+ * POST /api/v1/admin/demo/reset
+ * Cleanly reset and re-seed all demo personas, transactions, payouts, and rules.
+ */
+adminRouter.post(
+  '/demo/reset',
+  requireAdminRole(['super_admin', 'support', 'compliance_reviewer']),
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { seedDemoData } = await import('../scripts/seed-demo-data');
+      const result = await seedDemoData();
+      res.status(200).json({
+        success: true,
+        message: 'Demo data successfully reset and re-seeded',
+        result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+

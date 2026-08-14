@@ -33,9 +33,11 @@ export const FEE_SCHEDULES = {
     default: { fixed: 0, percentage: 0.015 },
   },
   disbursement: {
+    loop: { fixed: 0, percentage: 0.0 }, // Free internal LOOP transfer
     loop_number: { fixed: 0, percentage: 0.0 }, // Free internal LOOP transfer
     mpesa: { fixed: 15.0, percentage: 0.0 }, // KES 15 B2C mobile money fee
     bank_account: { fixed: 50.0, percentage: 0.0 }, // KES 50 PesaLink fee
+    bank: { fixed: 50.0, percentage: 0.0 }, // KES 50 PesaLink fee
     default: { fixed: 0, percentage: 0.0 },
   },
   platform_margin: {

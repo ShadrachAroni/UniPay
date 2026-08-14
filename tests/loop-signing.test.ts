@@ -14,7 +14,7 @@ describe('LOOP HMAC-SHA256 Request Signing', () => {
     };
     const expected = crypto
       .createHmac('sha256', TEST_SECRET)
-      .update(params.merchantTill + params.timestamp + params.nonce)
+      .update(`${params.merchantTill}|${params.timestamp}|${params.nonce}`)
       .digest('hex');
     const sig = generateLoopSignature(params);
     expect(sig).toBe(expected);
@@ -29,7 +29,7 @@ describe('LOOP HMAC-SHA256 Request Signing', () => {
     };
     const expected = crypto
       .createHmac('sha256', TEST_SECRET)
-      .update(params.merchantTill + params.timestamp + params.nonce)
+      .update(`${params.merchantTill}|${params.timestamp}|${params.nonce}`)
       .digest('hex');
     const sig = generateLoopSignature(params);
     expect(sig).toBe(expected);
@@ -44,7 +44,7 @@ describe('LOOP HMAC-SHA256 Request Signing', () => {
     };
     const expected = crypto
       .createHmac('sha256', TEST_SECRET)
-      .update(params.merchantTill + params.timestamp + params.nonce)
+      .update(`${params.merchantTill}|${params.timestamp}|${params.nonce}`)
       .digest('hex');
     const sig = generateLoopSignature(params);
     expect(sig).toBe(expected);

@@ -33,8 +33,9 @@ export default function PayoutsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('last_30d'));
 
+  const [payoutDestType, setPayoutDestType] = useState<'mpesa' | 'loop' | 'bank_account'>('mpesa');
   const [amount, setAmount] = useState('');
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState('+254704540384');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
@@ -65,12 +66,12 @@ export default function PayoutsScreen() {
 
     setIsSubmitting(true);
     try {
-      const newPayout = await requestPayout(parseFloat(amount), destination);
+      const normalizedDest = payoutDestType === 'loop' ? 'loop_number' : payoutDestType;
+      const newPayout = await requestPayout(parseFloat(amount), destination, normalizedDest);
       setPayouts([newPayout, ...payouts]);
       showToast('Payout requested successfully', 'success');
       bottomSheetRef.current?.dismiss();
       setAmount('');
-      setDestination('');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to request payout';
       showToast(message, 'error');
@@ -220,6 +221,75 @@ export default function PayoutsScreen() {
           </Text>
 
           <ScrollView keyboardShouldPersistTaps="handled">
+            {/* Destination Option Tabs */}
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity
+                onPress={() => {
+                  setPayoutDestType('mpesa');
+                  if (!destination || destination.includes('NCBA') || destination.includes('Bank') || destination === '133239') {
+                    setDestination('+254704540384');
+                  }
+                }}
+                className="flex-1 p-2.5 rounded-xl border items-center"
+                style={{
+                  backgroundColor: payoutDestType === 'mpesa' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surface,
+                  borderColor: payoutDestType === 'mpesa' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'mpesa' ? 2 : 1,
+                }}
+              >
+                <Text className="font-bold text-xs" style={{ color: payoutDestType === 'mpesa' ? activeColors.brand : activeColors.text.primary }}>
+                  M-Pesa B2C
+                </Text>
+                <Text style={{ color: activeColors.text.muted, fontSize: 10, marginTop: 2 }}>
+                  Fee: KES 15.00
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setPayoutDestType('loop');
+                  if (!destination || destination.includes('NCBA') || destination.includes('Bank')) {
+                    setDestination('133239');
+                  }
+                }}
+                className="flex-1 p-2.5 rounded-xl border items-center"
+                style={{
+                  backgroundColor: payoutDestType === 'loop' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surface,
+                  borderColor: payoutDestType === 'loop' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'loop' ? 2 : 1,
+                }}
+              >
+                <Text className="font-bold text-xs" style={{ color: payoutDestType === 'loop' ? activeColors.brand : activeColors.text.primary }}>
+                  LOOP Direct
+                </Text>
+                <Text style={{ color: tokens.colors.semantic.success, fontSize: 10, marginTop: 2, fontWeight: '600' }}>
+                  Fee: Free
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setPayoutDestType('bank_account');
+                  if (!destination || destination.startsWith('+254') || destination.startsWith('07') || destination === '133239') {
+                    setDestination('NCBA Bank - 1002348921');
+                  }
+                }}
+                className="flex-1 p-2.5 rounded-xl border items-center"
+                style={{
+                  backgroundColor: payoutDestType === 'bank_account' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surface,
+                  borderColor: payoutDestType === 'bank_account' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'bank_account' ? 2 : 1,
+                }}
+              >
+                <Text className="font-bold text-xs" style={{ color: payoutDestType === 'bank_account' ? activeColors.brand : activeColors.text.primary }}>
+                  Bank PesaLink
+                </Text>
+                <Text style={{ color: activeColors.text.muted, fontSize: 10, marginTop: 2 }}>
+                  Fee: KES 50.00
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <View className="mb-4">
               <Text
                 style={{
@@ -254,7 +324,11 @@ export default function PayoutsScreen() {
                   marginBottom: 6,
                 }}
               >
-                Destination (Bank/M-PESA)
+                {payoutDestType === 'bank_account'
+                  ? 'Bank Account & Paybill Number'
+                  : payoutDestType === 'loop'
+                  ? 'LOOP Till or Mobile Number'
+                  : 'Recipient M-Pesa Mobile Number'}
               </Text>
               <BottomSheetTextInput
                 className="px-4 h-12 rounded-xl border font-medium"
@@ -264,7 +338,13 @@ export default function PayoutsScreen() {
                   color: activeColors.text.primary,
                   fontSize: tokens.typography.size.base,
                 }}
-                placeholder="e.g. KCB Bank ****1234"
+                placeholder={
+                  payoutDestType === 'bank_account'
+                    ? 'e.g. NCBA Bank - 1002348921'
+                    : payoutDestType === 'loop'
+                    ? 'e.g. 133239 or +254704540384'
+                    : '+254704540384'
+                }
                 placeholderTextColor={activeColors.text.muted}
                 value={destination}
                 onChangeText={setDestination}
@@ -284,7 +364,7 @@ export default function PayoutsScreen() {
                   fontWeight: '600',
                 }}
               >
-                {isSubmitting ? 'Processing...' : 'Submit Request'}
+                {isSubmitting ? 'Processing...' : `Submit Payout via ${payoutDestType === 'loop' ? 'LOOP' : payoutDestType === 'bank_account' ? 'Bank' : 'M-Pesa'}`}
               </Text>
             </TouchableOpacity>
           </ScrollView>

@@ -132,7 +132,7 @@ export default function AdminOverviewScreen() {
 
   useEffect(() => {
     fetchMetrics();
-  }, [dateRange]);
+  }, [dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   const onRefresh = () => {
     setRefreshing(true);

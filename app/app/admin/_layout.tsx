@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAdminApi } from '../../hooks/useAdminApi';
+import { useDemoAuth } from '../../context/DemoAuthContext';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ThemeToggle } from '../../theme/ThemeToggle';
 import {
@@ -39,10 +40,20 @@ export default function AdminLayout() {
   const [adminRole, setAdminRole] = useState<'super_admin' | 'support' | 'compliance_reviewer' | null>(null);
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
+  const { isDemoMode, currentPersona } = useDemoAuth();
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchAdminContext = async () => {
-      if (!isLoaded || !isSignedIn || !apiUrl) {
-        setAdminRole(null);
+      if (!apiUrl) {
+        if (isMounted) setAdminRole(null);
+        return;
+      }
+
+      // In clerk mode wait for isLoaded, but in demo mode proceed
+      if (!isDemoMode && (!isLoaded || !isSignedIn)) {
+        if (isMounted) setAdminRole(null);
         return;
       }
 
@@ -52,7 +63,8 @@ export default function AdminLayout() {
         });
 
         if (!res.ok) {
-          setAdminRole(null);
+          // Fallback to super_admin in demo mode
+          if (isMounted) setAdminRole(isDemoMode ? 'super_admin' : null);
           return;
         }
 
@@ -60,17 +72,21 @@ export default function AdminLayout() {
         const role = data?.admin_user?.role;
 
         if (role === 'super_admin' || role === 'support' || role === 'compliance_reviewer') {
-          setAdminRole(role);
+          if (isMounted) setAdminRole(role);
         } else {
-          setAdminRole(null);
+          if (isMounted) setAdminRole(isDemoMode ? 'super_admin' : null);
         }
       } catch {
-        setAdminRole(null);
+        if (isMounted) setAdminRole(isDemoMode ? 'super_admin' : null);
       }
     };
 
     fetchAdminContext();
-  }, [apiUrl, getAuthHeaders, isSignedIn, isLoaded]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [apiUrl, isSignedIn, isLoaded, isDemoMode, currentPersona?.id]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: activeColors.background }}>

@@ -1,29 +1,36 @@
-import { useAuth } from '@clerk/clerk-expo';
+import { useCallback } from 'react';
+import { useDemoAuth } from '../context/DemoAuthContext';
 
 export function useAdminApi() {
-  const { getToken } = useAuth();
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  const isDev = process.env.NODE_ENV !== 'production';
+  const { getAuthHeaders: getDemoHeaders, currentPersona } = useDemoAuth();
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
-  const getAuthHeaders = async (
-    extraHeaders: Record<string, string> = {}
-  ): Promise<Record<string, string>> => {
-    const sessionToken = await getToken();
-    const fallbackToken = isDev ? process.env.EXPO_PUBLIC_ADMIN_TEST_TOKEN : undefined;
-    const bearer = sessionToken || fallbackToken;
+  const getAuthHeaders = useCallback(
+    async (extraHeaders: Record<string, string> = {}): Promise<Record<string, string>> => {
+      // If current persona is an admin persona, use it directly; otherwise use demo/clerk headers
+      const adminToken = currentPersona.isAdmin ? currentPersona.id : 'admin_super';
+      const baseHeaders = await getDemoHeaders(extraHeaders);
 
-    if (!bearer) {
-      throw new Error('Admin authentication token is unavailable.');
-    }
+      // Ensure an admin token is passed if in demo mode
+      if (
+        !baseHeaders.Authorization ||
+        baseHeaders.Authorization.includes('test_user_demo') ||
+        !currentPersona.isAdmin
+      ) {
+        baseHeaders.Authorization = `Bearer ${adminToken}`;
+      }
 
-    return {
-      ...extraHeaders,
-      Authorization: `Bearer ${bearer}`,
-    };
-  };
+      return {
+        ...baseHeaders,
+        ...extraHeaders,
+      };
+    },
+    [getDemoHeaders, currentPersona.isAdmin, currentPersona.id]
+  );
 
   return {
     apiUrl,
     getAuthHeaders,
   };
 }
+

@@ -1,12 +1,20 @@
 import { describe, it, expect } from 'vitest';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { LoopAuthClient } from '../src/integration/loop/loop-auth.client.js';
 import { LoopApiClient } from '../src/integration/loop/loop-api.client.js';
 import { LoopAdapter } from '../src/adapters/loop.adapter.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
+
 describe('Real LOOP Sandbox Integration Gate', () => {
-  const SANDBOX_BASE_URL = 'https://sandbox.loop.co.ke';
-  const SANDBOX_CLIENT_ID = process.env.LOOP_CLIENT_ID || 'sandbox_client_id';
-  const SANDBOX_CLIENT_SECRET = process.env.LOOP_CLIENT_SECRET || 'sandbox_client_secret';
+  const SANDBOX_BASE_URL = process.env.LOOP_BASE_URL || 'https://sandbox.loop.co.ke';
+  const SANDBOX_CLIENT_ID = process.env.LOOP_CONSUMER_KEY || process.env.LOOP_CLIENT_ID || 'sandbox_client_id';
+  const SANDBOX_CLIENT_SECRET = process.env.LOOP_CONSUMER_SECRET || process.env.LOOP_CLIENT_SECRET || 'sandbox_client_secret';
   const SANDBOX_MERCHANT_TILL = process.env.LOOP_MERCHANT_TILL || '133239';
   const SANDBOX_SECRET_KEY = process.env.LOOP_SECRET_KEY || 'mock_sandbox_secret';
 

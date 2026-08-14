@@ -39,15 +39,17 @@ export default function AdminUsersScreen() {
 
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = React.useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       if (!apiUrl) {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
       }
 
       let url = `${apiUrl}/api/v1/admin/users?limit=50`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
       if (statusFilter !== 'all') url += `&verification_status=${statusFilter}`;
       if (dateRange.startDate && dateRange.endDate) {
         const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
@@ -60,70 +62,21 @@ export default function AdminUsersScreen() {
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || []);
-      } else {
-        setUsers([
-          {
-            id: 'p-1001',
-            clerk_user_id: 'user_amina',
-            account_type: 'business',
-            display_name: 'Amina Groceries',
-            owner_name: 'Amina Mohamed',
-            currency: 'KES',
-            country_code: 'KE',
-            status: 'active',
-            verification_status: 'submitted',
-            id_number: 'ID-28491029',
-            id_document_url: 'https://docs.unipay.ke/id-amina.jpg',
-            id_submitted_at: new Date().toISOString(),
-            id_ai_check_result: { confidence: 0.96, match: true },
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 'p-1002',
-            clerk_user_id: 'user_kipchoge',
-            account_type: 'individual',
-            display_name: 'Kipchoge Supplies',
-            owner_name: 'Eliud Kipchoge',
-            currency: 'KES',
-            country_code: 'KE',
-            status: 'active',
-            verification_status: 'approved',
-            id_number: 'ID-55443322',
-            id_document_url: 'https://docs.unipay.ke/id-kip.jpg',
-            id_submitted_at: new Date().toISOString(),
-            id_reviewed_at: new Date().toISOString(),
-            id_reviewer_note: 'Verified national ID matches name',
-            created_at: new Date().toISOString(),
-          },
-        ]);
       }
-    } catch {
-      setUsers([
-        {
-          id: 'p-1001',
-          clerk_user_id: 'user_amina',
-          account_type: 'business',
-          display_name: 'Amina Groceries',
-          owner_name: 'Amina Mohamed',
-          currency: 'KES',
-          country_code: 'KE',
-          status: 'active',
-          verification_status: 'submitted',
-          id_number: 'ID-28491029',
-          id_document_url: 'https://docs.unipay.ke/id-amina.jpg',
-          id_submitted_at: new Date().toISOString(),
-          id_ai_check_result: { confidence: 0.96, match: true },
-          created_at: new Date().toISOString(),
-        },
-      ]);
+    } catch (err: any) {
+      console.log('Error fetching users:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAuthHeaders, search, statusFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [statusFilter, dateRange]);
+    const timer = setTimeout(() => {
+      fetchUsers(users.length === 0);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [search, statusFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   const handleReviewAction = async (decision: 'approved' | 'rejected' | 'suspended') => {
     if (!selectedUser) return;
@@ -146,7 +99,7 @@ export default function AdminUsersScreen() {
         setReviewModalVisible(false);
         setReviewerNote('');
         showToast(`User verification updated: ${decision.toUpperCase()}`, 'success');
-        fetchUsers();
+        fetchUsers(false);
       } else {
         const errData = await res.json();
         showToast(errData.message || 'Action failed', 'error');
@@ -173,7 +126,14 @@ export default function AdminUsersScreen() {
             KYC verification queue, status lifecycle, and profile audits
           </Text>
         </View>
-        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchUsers} />
+        <Button
+          title="Refresh Queue"
+          size="sm"
+          variant="secondary"
+          icon="refresh-cw"
+          loading={loading}
+          onPress={() => fetchUsers(true)}
+        />
       </View>
 
       {/* Filter Row */}
@@ -182,10 +142,7 @@ export default function AdminUsersScreen() {
           <SearchBar
             placeholder="Search by name, email, phone or ID..."
             value={search}
-            onChangeText={(text: string) => {
-              setSearch(text);
-              fetchUsers();
-            }}
+            onChangeText={(text: string) => setSearch(text)}
           />
         </View>
 
@@ -212,7 +169,7 @@ export default function AdminUsersScreen() {
 
       {/* Users Table */}
       <Card style={{ padding: 0 }}>
-        {loading ? (
+        {loading && users.length === 0 ? (
           <View className="p-4 gap-3">
             <Skeleton width="100%" height={50} />
             <Skeleton width="100%" height={50} />

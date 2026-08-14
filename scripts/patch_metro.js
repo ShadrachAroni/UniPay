@@ -37,6 +37,39 @@ function patchMetroPackage(pkgDir) {
   }
 }
 
+function patchFinalHandler() {
+  const finalHandlerPath = path.join(nodeModulesDir, 'finalhandler', 'index.js');
+  if (fs.existsSync(finalHandlerPath)) {
+    try {
+      let content = fs.readFileSync(finalHandlerPath, 'utf8');
+      if (content.includes('res.statusMessage = statuses.message[status]')) {
+        content = content.replace(
+          'res.statusMessage = statuses.message[status]',
+          'res.statusMessage = (statuses.message && statuses.message[status]) || (typeof statuses === \'function\' ? statuses(status) : null) || statuses[status] || \'Error\''
+        );
+        fs.writeFileSync(finalHandlerPath, content, 'utf8');
+        console.log('[patch_metro] Patched finalhandler index.js for statusMessage compatibility');
+      }
+    } catch (e) {
+      console.error('[patch_metro] Error patching finalhandler:', e.message);
+    }
+  }
+
+  const nestedStatusesPath = path.join(nodeModulesDir, 'finalhandler', 'node_modules', 'statuses', 'index.js');
+  if (fs.existsSync(nestedStatusesPath)) {
+    try {
+      let content = fs.readFileSync(nestedStatusesPath, 'utf8');
+      if (!content.includes('status.message = codes')) {
+        content = content.replace('status.STATUS_CODES = codes', 'status.STATUS_CODES = codes\nstatus.message = codes');
+        fs.writeFileSync(nestedStatusesPath, content, 'utf8');
+        console.log('[patch_metro] Patched nested statuses for finalhandler');
+      }
+    } catch (e) {
+      console.error('[patch_metro] Error patching nested statuses:', e.message);
+    }
+  }
+}
+
 if (fs.existsSync(nodeModulesDir)) {
   const dirs = fs.readdirSync(nodeModulesDir);
   for (const d of dirs) {
@@ -44,4 +77,5 @@ if (fs.existsSync(nodeModulesDir)) {
       patchMetroPackage(path.join(nodeModulesDir, d));
     }
   }
+  patchFinalHandler();
 }

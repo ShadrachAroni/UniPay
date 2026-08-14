@@ -33,8 +33,10 @@ export default function AdminExceptionsScreen() {
 
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
-  const fetchExceptions = async () => {
-    setLoading(true);
+  const fetchExceptions = React.useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       if (!apiUrl) {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
@@ -53,51 +55,17 @@ export default function AdminExceptionsScreen() {
       if (res.ok) {
         const data = await res.json();
         setExceptions(data.exceptions || []);
-      } else {
-        setExceptions([
-          {
-            id: 'ex-201',
-            profile_id: 'p-1001',
-            transaction_id: 'tx-501',
-            category: 'fee_mismatch',
-            status: 'open',
-            details: { expected_fee: 15.0, provider_charged_fee: 25.0, rail: 'loop' },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: 'ex-202',
-            profile_id: 'p-1002',
-            transaction_id: 'tx-502',
-            category: 'overpayment',
-            status: 'open',
-            details: { expected_amount: 1000.0, received_amount: 1500.0, reference: 'INV-8821' },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
       }
-    } catch {
-      setExceptions([
-        {
-          id: 'ex-201',
-          profile_id: 'p-1001',
-          transaction_id: 'tx-501',
-          category: 'fee_mismatch',
-          status: 'open',
-          details: { expected_fee: 15.0, provider_charged_fee: 25.0, rail: 'loop' },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ]);
+    } catch (err: any) {
+      console.log('Error fetching exceptions:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAuthHeaders, categoryFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   useEffect(() => {
-    fetchExceptions();
-  }, [categoryFilter, dateRange]);
+    fetchExceptions(exceptions.length === 0);
+  }, [categoryFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   const handleAction = async (action: 'resolve' | 'escalate') => {
     if (!selectedException) return;
@@ -116,7 +84,7 @@ export default function AdminExceptionsScreen() {
         setActionModalVisible(false);
         setActionNotes('');
         showToast(`Exception marked as ${action === 'resolve' ? 'Resolved' : 'Escalated'}`, 'success');
-        fetchExceptions();
+        fetchExceptions(false);
       } else {
         showToast('Failed to update exception', 'error');
       }
@@ -142,7 +110,14 @@ export default function AdminExceptionsScreen() {
             System-wide reconciliation exceptions queue across all 7 categories
           </Text>
         </View>
-        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchExceptions} />
+        <Button
+          title="Refresh Queue"
+          size="sm"
+          variant="secondary"
+          icon="refresh-cw"
+          loading={loading}
+          onPress={() => fetchExceptions(true)}
+        />
       </View>
 
       {/* Category Filter Pills */}
@@ -178,7 +153,7 @@ export default function AdminExceptionsScreen() {
 
       {/* Exceptions Table */}
       <Card style={{ padding: 0 }}>
-        {loading ? (
+        {loading && exceptions.length === 0 ? (
           <View className="p-4 gap-3">
             <Skeleton width="100%" height={50} />
             <Skeleton width="100%" height={50} />

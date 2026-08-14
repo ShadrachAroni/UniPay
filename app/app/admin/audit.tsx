@@ -30,15 +30,17 @@ export default function AdminAuditScreen() {
 
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
-  const fetchAuditLogs = async () => {
-    setLoading(true);
+  const fetchAuditLogs = React.useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       if (!apiUrl) {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
       }
 
       let url = `${apiUrl}/api/v1/admin/audit-logs?limit=50`;
-      if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
+      if (actionFilter.trim()) url += `&action=${encodeURIComponent(actionFilter.trim())}`;
       if (dateRange.startDate && dateRange.endDate) {
         const utcRange = toUTCRange(dateRange.startDate, dateRange.endDate, getDeviceTimezoneOffsetHours());
         url += `&from=${encodeURIComponent(utcRange.from)}&to=${encodeURIComponent(utcRange.to)}`;
@@ -50,54 +52,21 @@ export default function AdminAuditScreen() {
       if (res.ok) {
         const data = await res.json();
         setLogs(data.audit_logs || []);
-      } else {
-        setLogs([
-          {
-            id: 'log-101',
-            actor_type: 'admin',
-            actor_id: 'admin_super_user',
-            action: 'payment_rail.update_config',
-            target_type: 'payment_rail',
-            target_id: 'loop',
-            before_state: { is_enabled: false, fee_percentage: 0.01 },
-            after_state: { is_enabled: true, fee_percentage: 0.015 },
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 'log-102',
-            actor_type: 'admin',
-            actor_id: 'admin_compliance_user',
-            action: 'identity.approved',
-            target_type: 'profile',
-            target_id: 'p-1001',
-            before_state: { verification_status: 'submitted' },
-            after_state: { verification_status: 'approved', reviewer_note: 'Verified against national registry' },
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
       }
-    } catch {
-      setLogs([
-        {
-          id: 'log-101',
-          actor_type: 'admin',
-          actor_id: 'admin_super_user',
-          action: 'payment_rail.update_config',
-          target_type: 'payment_rail',
-          target_id: 'loop',
-          before_state: { is_enabled: false, fee_percentage: 0.01 },
-          after_state: { is_enabled: true, fee_percentage: 0.015 },
-          created_at: new Date().toISOString(),
-        },
-      ]);
+    } catch (err: any) {
+      console.log('Error fetching audit logs:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAuthHeaders, actionFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   useEffect(() => {
-    fetchAuditLogs();
-  }, [dateRange]);
+    const timer = setTimeout(() => {
+      fetchAuditLogs(logs.length === 0);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [actionFilter, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   return (
     <ScrollView
@@ -114,7 +83,14 @@ export default function AdminAuditScreen() {
             Immutable administrative action logs and before/after mutation diffs (§11, §19)
           </Text>
         </View>
-        <Button title="Refresh Logs" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchAuditLogs} />
+        <Button
+          title="Refresh Logs"
+          size="sm"
+          variant="secondary"
+          icon="refresh-cw"
+          loading={loading}
+          onPress={() => fetchAuditLogs(true)}
+        />
       </View>
 
       <View className="flex-row gap-3 mb-6">
@@ -122,10 +98,7 @@ export default function AdminAuditScreen() {
           <SearchBar
             placeholder="Filter by action (e.g. identity.approved, payment_rail.update)..."
             value={actionFilter}
-            onChangeText={(text) => {
-              setActionFilter(text);
-              fetchAuditLogs();
-            }}
+            onChangeText={(text) => setActionFilter(text)}
           />
         </View>
       </View>
@@ -139,7 +112,7 @@ export default function AdminAuditScreen() {
       </View>
 
       <Card style={{ padding: 0 }}>
-        {loading ? (
+        {loading && logs.length === 0 ? (
           <View className="p-4 gap-3">
             <Skeleton width="100%" height={50} />
             <Skeleton width="100%" height={50} />

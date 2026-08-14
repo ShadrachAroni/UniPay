@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../../components/ui/Card';
@@ -40,8 +40,10 @@ export default function AdminPayoutsScreen() {
 
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       if (!apiUrl) {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
@@ -76,47 +78,17 @@ export default function AdminPayoutsScreen() {
           setDisputes(data.disputes || []);
         }
       }
-    } catch {
-      if (activeTab === 'payouts') {
-        setPayouts([
-          {
-            id: 'po-101',
-            profile_id: 'p-1001',
-            provider: 'loop',
-            requested_amount: 15000,
-            requested_currency: 'KES',
-            destination_type: 'bank_account',
-            destination_reference: 'NCBA-***4920',
-            fee: 50,
-            net_amount: 14950,
-            status: 'failed',
-            idempotency_key: 'idemp-po-101',
-            requested_at: new Date().toISOString(),
-          },
-        ]);
-      } else {
-        setDisputes([
-          {
-            id: 'dsp-501',
-            profile_id: 'p-1001',
-            transaction_id: 'tx-201',
-            reason: 'Payer claims duplicate charge during network timeout',
-            amount: 2500,
-            currency: 'KES',
-            status: 'open',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-      }
+    } catch (err: any) {
+      console.log('Error fetching payouts/disputes:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAuthHeaders, activeTab, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   useEffect(() => {
-    fetchData();
-  }, [activeTab, dateRange]);
+    const isInitial = activeTab === 'payouts' ? payouts.length === 0 : disputes.length === 0;
+    fetchData(isInitial);
+  }, [activeTab, dateRange.startDate?.getTime(), dateRange.endDate?.getTime()]);
 
   const handlePayoutIntervention = async (action: 'retry' | 'cancel') => {
     if (!selectedPayout) return;
@@ -135,7 +107,7 @@ export default function AdminPayoutsScreen() {
         setPayoutModalVisible(false);
         setPayoutReason('');
         showToast(`Payout action '${action}' completed successfully`, 'success');
-        fetchData();
+        fetchData(false);
       } else {
         showToast('Failed to perform payout intervention', 'error');
       }
@@ -163,7 +135,7 @@ export default function AdminPayoutsScreen() {
         setDisputeModalVisible(false);
         setDisputeNotes('');
         showToast(`Dispute marked as ${decision === 'resolved_refund' ? 'Refunded' : 'Rejected'}`, 'success');
-        fetchData();
+        fetchData(false);
       } else {
         showToast('Failed to resolve dispute', 'error');
       }
@@ -189,21 +161,45 @@ export default function AdminPayoutsScreen() {
             Manual intervention controls for stuck payouts and customer dispute resolution
           </Text>
         </View>
-        <Button title="Refresh Queue" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchData} />
+        <Button
+          title="Refresh Queue"
+          size="sm"
+          variant="secondary"
+          icon="refresh-cw"
+          loading={loading}
+          onPress={() => fetchData(true)}
+        />
       </View>
 
       {/* Sub-tab Selector */}
       <View className="flex-row gap-2 mb-6">
-        <Chip
-          label="Payout Disbursements"
-          selected={activeTab === 'payouts'}
+        <TouchableOpacity
           onPress={() => setActiveTab('payouts')}
-        />
-        <Chip
-          label="Dispute Cases Queue"
-          selected={activeTab === 'disputes'}
+          className="px-4 py-2 rounded-xl border flex-row items-center gap-2"
+          style={{
+            backgroundColor: activeTab === 'payouts' ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff') : activeColors.surface,
+            borderColor: activeTab === 'payouts' ? activeColors.brand : activeColors.border,
+          }}
+        >
+          <ArrowRight size={16} color={activeTab === 'payouts' ? activeColors.brand : activeColors.text.secondary} />
+          <Text className="font-bold text-sm" style={{ color: activeTab === 'payouts' ? activeColors.brand : activeColors.text.primary }}>
+            Stuck Payouts ({payouts.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => setActiveTab('disputes')}
-        />
+          className="px-4 py-2 rounded-xl border flex-row items-center gap-2"
+          style={{
+            backgroundColor: activeTab === 'disputes' ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff') : activeColors.surface,
+            borderColor: activeTab === 'disputes' ? activeColors.brand : activeColors.border,
+          }}
+        >
+          <ShieldAlert size={16} color={activeTab === 'disputes' ? activeColors.brand : activeColors.text.secondary} />
+          <Text className="font-bold text-sm" style={{ color: activeTab === 'disputes' ? activeColors.brand : activeColors.text.primary }}>
+            Dispute Cases ({disputes.length})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View className="mb-6">
@@ -216,7 +212,7 @@ export default function AdminPayoutsScreen() {
 
       {/* Table Content */}
       <Card style={{ padding: 0 }}>
-        {loading ? (
+        {loading && (activeTab === 'payouts' ? payouts.length === 0 : disputes.length === 0) ? (
           <View className="p-4 gap-3">
             <Skeleton width="100%" height={50} />
             <Skeleton width="100%" height={50} />

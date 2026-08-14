@@ -39,8 +39,10 @@ export default function AdminRailsScreen() {
 
   const { apiUrl, getAuthHeaders } = useAdminApi();
 
-  const fetchRails = async () => {
-    setLoading(true);
+  const fetchRails = React.useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       if (!apiUrl) {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
@@ -53,43 +55,16 @@ export default function AdminRailsScreen() {
         const data = await res.json();
         setRails(data.rails || []);
       }
-    } catch {
-      setRails([
-        {
-          id: 'r-1',
-          name: 'LOOP Mobile Money (NCBA)',
-          adapter_key: 'loop',
-          is_enabled: true,
-          min_amount: 10,
-          max_amount: 500000,
-          capabilities_json: {
-            feeStructure: { fixed: 0, percentage: 0.015 },
-            settlementEstimate: 'instant',
-          },
-          health: { circuit_breaker_state: 'CLOSED', error_rate: 0.0, total_requests: 32 },
-        },
-        {
-          id: 'r-2',
-          name: 'Seeded Rail (Simulated Fixture)',
-          adapter_key: 'seeded',
-          is_enabled: true,
-          min_amount: 10,
-          max_amount: 500000,
-          capabilities_json: {
-            feeStructure: { fixed: 0, percentage: 0.005 },
-            settlementEstimate: 'instant',
-          },
-          health: { circuit_breaker_state: 'CLOSED', error_rate: 0.0, total_requests: 16 },
-        },
-      ]);
+    } catch (err: any) {
+      console.log('Error fetching rails:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAuthHeaders]);
 
   useEffect(() => {
-    fetchRails();
-  }, []);
+    fetchRails(rails.length === 0);
+  }, [fetchRails]);
 
   const handleToggleRail = async (rail: RailItem, nextEnabled: boolean) => {
     try {
@@ -107,7 +82,7 @@ export default function AdminRailsScreen() {
       } else {
         showToast('Failed to update rail status', 'error');
       }
-      fetchRails();
+      fetchRails(false);
     } catch (err: any) {
       showToast(err.message || 'Error updating rail', 'error');
     }
@@ -121,21 +96,35 @@ export default function AdminRailsScreen() {
         throw new Error('EXPO_PUBLIC_API_URL is not configured');
       }
 
-      const pct = parseFloat(editFeePercentage) / 100;
+      const parsedFee = parseFloat(editFeePercentage);
+      if (isNaN(parsedFee) || parsedFee < 0) {
+        showToast('Please enter a valid fee percentage', 'error');
+        return;
+      }
+
+      const updatedCapabilities = {
+        ...editingRail.capabilities_json,
+        feeStructure: {
+          fixed: editingRail.capabilities_json?.feeStructure?.fixed || 0,
+          percentage: parsedFee / 100,
+        },
+      };
+
       const res = await fetch(`${apiUrl}/api/v1/admin/payment-rails/${editingRail.adapter_key}`, {
         method: 'PUT',
         headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ fee_percentage: pct }),
+        body: JSON.stringify({ capabilities_json: updatedCapabilities }),
       });
+
       if (res.ok) {
         setEditModalVisible(false);
-        showToast(`Updated fee for ${editingRail.name}`, 'success');
-        fetchRails();
+        showToast(`Fee structure updated for ${editingRail.name}`, 'success');
+        fetchRails(false);
       } else {
-        showToast('Failed to update rail configuration', 'error');
+        showToast('Failed to update fee configuration', 'error');
       }
     } catch (err: any) {
-      showToast(err.message || 'Error updating configuration', 'error');
+      showToast(err.message || 'Error saving rail config', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -156,11 +145,18 @@ export default function AdminRailsScreen() {
             Rails as configuration (§9b) — toggle availability and adjust dynamic fee routing
           </Text>
         </View>
-        <Button title="Reload Rails" size="sm" variant="secondary" icon="refresh-cw" onPress={fetchRails} />
+        <Button
+          title="Reload Rails"
+          size="sm"
+          variant="secondary"
+          icon="refresh-cw"
+          loading={loading}
+          onPress={() => fetchRails(true)}
+        />
       </View>
 
       <View className="gap-4">
-        {loading ? (
+        {loading && rails.length === 0 ? (
           <>
             <Skeleton width="100%" height={120} />
             <Skeleton width="100%" height={120} />

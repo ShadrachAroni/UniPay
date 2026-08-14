@@ -153,15 +153,19 @@ function NavigationStack() {
   );
 }
 
+import { DemoAuthProvider } from '../context/DemoAuthContext';
+
 export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <ThemeProvider>
-          <ToastProvider>
-            <NavigationStack />
-          </ToastProvider>
-        </ThemeProvider>
+        <DemoAuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <NavigationStack />
+            </ToastProvider>
+          </ThemeProvider>
+        </DemoAuthProvider>
       </ClerkLoaded>
     </ClerkProvider>
   );

@@ -32,8 +32,8 @@ export class LoopAdapter implements PaymentProviderAdapter {
     if (options.apiClient) {
       this.apiClient = options.apiClient;
     } else {
-      const clientId = options.clientId || process.env.LOOP_CLIENT_ID || 'sandbox_client_id';
-      const clientSecret = options.clientSecret || process.env.LOOP_CLIENT_SECRET || 'sandbox_client_secret';
+      const clientId = options.clientId || process.env.LOOP_CONSUMER_KEY || process.env.LOOP_CLIENT_ID || 'sandbox_client_id';
+      const clientSecret = options.clientSecret || process.env.LOOP_CONSUMER_SECRET || process.env.LOOP_CLIENT_SECRET || 'sandbox_client_secret';
       const merchantTill = options.merchantTill || process.env.LOOP_MERCHANT_TILL || '133239';
       const signingSecret = options.signingSecret || process.env.LOOP_SECRET_KEY || 'mock_loop_signing_secret';
       const baseUrl = options.baseUrl || process.env.LOOP_BASE_URL || 'https://sandbox.loop.co.ke';

@@ -47,18 +47,18 @@ import {
   Zap,
 } from 'lucide-react-native';
 
+import { useDemoAuth } from '../context/DemoAuthContext';
+import { PersonaSwitcher } from '../components/ui/PersonaSwitcher';
+
 export default function IndexScreen() {
-  const { isSignedIn, signOut, getToken } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
+  const { currentPersona, getAuthHeaders, isDemoMode, isClerkSignedIn } = useDemoAuth();
   const router = useRouter();
   const { tokens, isDark, activeColors } = useTheme();
   const { showToast } = useToast();
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-
-  if (!apiUrl) {
-    throw new Error('Missing EXPO_PUBLIC_API_URL environment variable.');
-  }
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
   // Profile & Verification state
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -113,27 +113,7 @@ export default function IndexScreen() {
   const [lookupHandle, setLookupHandle] = useState<string>('');
   const [lookupResult, setLookupResult] = useState<any>(null);
   const [lookingUp, setLookingUp] = useState<boolean>(false);
-
-  // Helper to fetch authorization header
-  const getAuthHeaders = async (): Promise<Record<string, string>> => {
-    try {
-      const token = await getToken();
-      if (token) {
-        return {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        };
-      }
-    } catch {
-      // Fallback in test mode
-    }
-
-    const testId = user?.id || 'test_user_demo';
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${testId}`,
-    };
-  };
+  const [balance, setBalance] = useState<{ available_to_withdraw: number; ledger_balance: number } | null>(null);
 
   // Fetch current user's profile
   const fetchUserProfile = async () => {
@@ -147,10 +127,12 @@ export default function IndexScreen() {
         setProfile(data.profile);
         setAliases(data.aliases || []);
         if (data.profile?.id) {
-          fetchRules(data.profile.id);
+          fetchRules(data.profile.id, headers);
+          fetchBalance(data.profile.id, headers);
         }
       } else if (res.status === 404) {
         setProfile(null);
+        setBalance(null);
       }
     } catch (err: any) {
       console.log('Profile fetch error:', err.message);
@@ -160,11 +142,24 @@ export default function IndexScreen() {
     }
   };
 
-  const fetchRules = async (profileId: string) => {
+  const fetchBalance = async (profileId: string, headers?: Record<string, string>) => {
+    try {
+      const authHeaders = headers || (await getAuthHeaders());
+      const res = await fetch(`${apiUrl}/api/v1/profiles/${profileId}/balance`, { headers: authHeaders });
+      if (res.ok) {
+        const data = await res.json();
+        setBalance(data);
+      }
+    } catch (err: any) {
+      console.log('Balance fetch error:', err.message);
+    }
+  };
+
+  const fetchRules = async (profileId: string, headers?: Record<string, string>) => {
     setLoadingRules(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${apiUrl}/api/v1/profiles/${profileId}/money-direction/rules`, { headers });
+      const authHeaders = headers || (await getAuthHeaders());
+      const res = await fetch(`${apiUrl}/api/v1/profiles/${profileId}/money-direction/rules`, { headers: authHeaders });
       if (res.ok) {
         const data = await res.json();
         setRules(data.rules || []);
@@ -185,7 +180,7 @@ export default function IndexScreen() {
     if (user?.primaryEmailAddress?.emailAddress) {
       setEmail(user.primaryEmailAddress.emailAddress);
     }
-  }, [user, isSignedIn]);
+  }, [user, isSignedIn, currentPersona.id]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -402,10 +397,16 @@ export default function IndexScreen() {
       return;
     }
 
+    if (!payoutDestRef.trim()) {
+      showToast('Please enter a destination account or mobile number', 'info');
+      return;
+    }
+
     setPayoutLoading(true);
     try {
       const headers = await getAuthHeaders();
       const idempotencyKey = `payout_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const normalizedDestType = payoutDestType === 'loop' ? 'loop_number' : payoutDestType;
       const res = await fetch(`${apiUrl}/api/v1/payouts`, {
         method: 'POST',
         headers: {
@@ -416,16 +417,19 @@ export default function IndexScreen() {
           profile_id: profile.id,
           amount: amountNum,
           currency: 'KES',
-          destination_type: payoutDestType,
-          destination_reference: payoutDestRef,
-          remarks: `UniPay payout via ${payoutDestType.toUpperCase()}`,
+          destination_type: normalizedDestType,
+          destination_reference: payoutDestRef.trim(),
+          remarks: `UniPay payout via ${payoutDestType === 'loop' ? 'LOOP Account' : payoutDestType === 'bank_account' ? 'Bank PesaLink' : 'M-Pesa B2C'}`,
         }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        showToast(`Payout request submitted: KES ${amountNum.toFixed(2)}`, 'success');
+        showToast(`Payout of KES ${amountNum.toFixed(2)} submitted successfully!`, 'success');
         setPayoutAmount('');
+        if (profile.id) {
+          fetchBalance(profile.id, headers);
+        }
       } else {
         showToast(data.message || 'Payout request failed', 'error');
       }
@@ -547,9 +551,12 @@ export default function IndexScreen() {
         </View>
 
         {/* Theme Mode Toggle Container */}
-        <View className="mb-6">
+        <View className="mb-4">
           <ThemeToggle />
         </View>
+
+        {/* 1-Click Demo Persona Switcher */}
+        <PersonaSwitcher />
 
         {/* Global Error Banner */}
         {errorMsg && (
@@ -590,7 +597,7 @@ export default function IndexScreen() {
               </Text>
               <View className="px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/30">
                 <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: '700' }}>
-                  {profile?.account_type ? profile.account_type.toUpperCase() : 'STANDARD'}
+                  {profile?.account_type ? profile.account_type.toUpperCase() : currentPersona.role.toUpperCase()}
                 </Text>
               </View>
             </View>
@@ -600,7 +607,11 @@ export default function IndexScreen() {
                 {profile?.currency || 'KES'}
               </Text>
               <Text style={{ color: '#ffffff', fontSize: tokens.typography.size['2xl'], fontWeight: 'bold' }}>
-                {profile ? '0.00' : '---'}
+                {profile
+                  ? (balance?.available_to_withdraw != null
+                      ? balance.available_to_withdraw.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                      : '0.00')
+                  : '---'}
               </Text>
             </View>
 
@@ -612,13 +623,13 @@ export default function IndexScreen() {
                 </Text>
               </View>
               <Text style={{ color: '#94a3b8', fontSize: tokens.typography.size.xs }}>
-                Single Account Model (§9b)
+                {profile?.verification_status === 'approved' ? 'Identity Verified' : 'Single Account Model (§9b)'}
               </Text>
             </View>
           </View>
         )}
 
-        {/* Clerk Authentication Card */}
+        {/* Clerk / Demo Session Card */}
         <Card className="mb-6">
           <View className="flex-row justify-between items-center mb-3">
             <View className="flex-row items-center">
@@ -651,10 +662,12 @@ export default function IndexScreen() {
             style={{ backgroundColor: activeColors.surfaceSubtle, borderColor: activeColors.borderSubtle }}
           >
             <Text style={{ color: activeColors.text.muted, fontSize: tokens.typography.size.xs }}>
-              Clerk Session:
+              Active Session:
             </Text>
             <Text className="font-mono text-xs font-semibold mt-0.5" style={{ color: activeColors.brand }}>
-              {isSignedIn ? (user?.primaryEmailAddress?.emailAddress || user?.id) : 'Demo / Guest User'}
+              {isSignedIn
+                ? (user?.primaryEmailAddress?.emailAddress || user?.id)
+                : `${currentPersona.name} (${currentPersona.id} - Demo Mode)`}
             </Text>
           </View>
         </Card>
@@ -1076,7 +1089,11 @@ export default function IndexScreen() {
                   Withdraw Funds & Payouts (§18)
                 </Text>
               </View>
-              <Chip label="Instant B2C" variant="success" size="sm" />
+              <Chip
+                label={`Available: KES ${(balance?.available_to_withdraw ?? 0).toLocaleString()}`}
+                variant="brand"
+                size="sm"
+              />
             </View>
             <Text style={{ color: activeColors.text.secondary, fontSize: tokens.typography.size.xs, marginBottom: 16 }}>
               Disburse settled funds directly to your M-Pesa, Bank Account, or LOOP till.
@@ -1085,48 +1102,75 @@ export default function IndexScreen() {
             {/* Destination Type Selectors */}
             <View className="flex-row gap-2 mb-4">
               <TouchableOpacity
-                onPress={() => setPayoutDestType('mpesa')}
+                onPress={() => {
+                  setPayoutDestType('mpesa');
+                  if (!payoutDestRef || payoutDestRef.includes('NCBA') || payoutDestRef.includes('Bank') || payoutDestRef === '133239') {
+                    setPayoutDestRef(profile?.phone || phone || '+254712345678');
+                  }
+                }}
                 className="flex-1 p-3 rounded-xl border items-center"
                 style={{
-                  backgroundColor: payoutDestType === 'mpesa' ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff') : activeColors.surfaceSubtle,
+                  backgroundColor: payoutDestType === 'mpesa' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surfaceSubtle,
                   borderColor: payoutDestType === 'mpesa' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'mpesa' ? 2 : 1,
                 }}
               >
-                <Text className="font-bold text-xs" style={{ color: activeColors.text.primary }}>
-                  M-Pesa B2C
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className="font-bold text-xs" style={{ color: payoutDestType === 'mpesa' ? activeColors.brand : activeColors.text.primary }}>
+                    M-Pesa B2C
+                  </Text>
+                  {payoutDestType === 'mpesa' && <CheckCircle2 size={12} color={activeColors.brand} />}
+                </View>
                 <Text style={{ color: activeColors.text.muted, fontSize: 10, marginTop: 2 }}>
                   Fee: KES 15.00
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => setPayoutDestType('loop')}
+                onPress={() => {
+                  setPayoutDestType('loop');
+                  if (!payoutDestRef || payoutDestRef.includes('NCBA') || payoutDestRef.includes('Bank')) {
+                    setPayoutDestRef(profile?.phone || '133239');
+                  }
+                }}
                 className="flex-1 p-3 rounded-xl border items-center"
                 style={{
-                  backgroundColor: payoutDestType === 'loop' ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff') : activeColors.surfaceSubtle,
+                  backgroundColor: payoutDestType === 'loop' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surfaceSubtle,
                   borderColor: payoutDestType === 'loop' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'loop' ? 2 : 1,
                 }}
               >
-                <Text className="font-bold text-xs" style={{ color: activeColors.text.primary }}>
-                  LOOP Account
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className="font-bold text-xs" style={{ color: payoutDestType === 'loop' ? activeColors.brand : activeColors.text.primary }}>
+                    LOOP Account
+                  </Text>
+                  {payoutDestType === 'loop' && <CheckCircle2 size={12} color={activeColors.brand} />}
+                </View>
                 <Text style={{ color: tokens.colors.semantic.success, fontSize: 10, marginTop: 2, fontWeight: '600' }}>
                   Fee: KES 0.00 (Free)
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => setPayoutDestType('bank_account')}
+                onPress={() => {
+                  setPayoutDestType('bank_account');
+                  if (!payoutDestRef || payoutDestRef.startsWith('+254') || payoutDestRef.startsWith('07') || payoutDestRef === '133239') {
+                    setPayoutDestRef('NCBA Bank - 1002348921');
+                  }
+                }}
                 className="flex-1 p-3 rounded-xl border items-center"
                 style={{
-                  backgroundColor: payoutDestType === 'bank_account' ? (isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff') : activeColors.surfaceSubtle,
+                  backgroundColor: payoutDestType === 'bank_account' ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : activeColors.surfaceSubtle,
                   borderColor: payoutDestType === 'bank_account' ? activeColors.brand : activeColors.border,
+                  borderWidth: payoutDestType === 'bank_account' ? 2 : 1,
                 }}
               >
-                <Text className="font-bold text-xs" style={{ color: activeColors.text.primary }}>
-                  Bank PesaLink
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className="font-bold text-xs" style={{ color: payoutDestType === 'bank_account' ? activeColors.brand : activeColors.text.primary }}>
+                    Bank PesaLink
+                  </Text>
+                  {payoutDestType === 'bank_account' && <CheckCircle2 size={12} color={activeColors.brand} />}
+                </View>
                 <Text style={{ color: activeColors.text.muted, fontSize: 10, marginTop: 2 }}>
                   Fee: KES 50.00
                 </Text>
@@ -1145,48 +1189,80 @@ export default function IndexScreen() {
               />
 
               <Input
-                label={payoutDestType === 'bank_account' ? 'Bank Account / Paybill Number' : 'Recipient Mobile Number'}
+                label={
+                  payoutDestType === 'bank_account'
+                    ? 'Bank Account & Paybill Number'
+                    : payoutDestType === 'loop'
+                    ? 'LOOP Mobile / Account / Till Number'
+                    : 'Recipient M-Pesa Mobile Number'
+                }
                 value={payoutDestRef}
                 onChangeText={setPayoutDestRef}
-                placeholder="+254712345678"
-                icon="phone"
+                placeholder={
+                  payoutDestType === 'bank_account'
+                    ? 'e.g. NCBA Bank - 1002348921 or Paybill 888888'
+                    : payoutDestType === 'loop'
+                    ? 'e.g. +254704540384 or Till 133239'
+                    : '+254712345678'
+                }
+                icon={payoutDestType === 'bank_account' ? 'credit-card' : 'phone'}
               />
             </View>
 
             {/* Fee Breakdown Preview */}
             <View
-              className="p-3 rounded-xl border mb-4"
+              className="p-3.5 rounded-xl border mb-4"
               style={{ backgroundColor: activeColors.surfaceSubtle, borderColor: activeColors.border }}
             >
-              <View className="flex-row justify-between mb-1">
-                <Text style={{ color: activeColors.text.secondary, fontSize: 11 }}>
+              <View className="flex-row justify-between mb-1.5">
+                <Text style={{ color: activeColors.text.secondary, fontSize: 12 }}>
+                  Selected Rail:
+                </Text>
+                <Text className="font-bold" style={{ color: activeColors.brand, fontSize: 12 }}>
+                  {payoutDestType === 'loop'
+                    ? 'LOOP Direct (Instant · Free)'
+                    : payoutDestType === 'bank_account'
+                    ? 'Bank PesaLink Rail (Instant)'
+                    : 'M-Pesa B2C Rail (Instant)'}
+                </Text>
+              </View>
+              <View className="flex-row justify-between mb-1.5">
+                <Text style={{ color: activeColors.text.secondary, fontSize: 12 }}>
                   Requested Amount:
                 </Text>
-                <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: 11 }}>
+                <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: 12 }}>
                   KES {parseFloat(payoutAmount || '0').toFixed(2)}
                 </Text>
               </View>
-              <View className="flex-row justify-between mb-1">
-                <Text style={{ color: activeColors.text.secondary, fontSize: 11 }}>
-                  Disbursement Fee (Centralized Engine):
+              <View className="flex-row justify-between mb-1.5">
+                <Text style={{ color: activeColors.text.secondary, fontSize: 12 }}>
+                  Disbursement Fee:
                 </Text>
-                <Text className="font-bold" style={{ color: tokens.colors.semantic.error, fontSize: 11 }}>
-                  - KES {getDisbursementFeeEstimate().toFixed(2)}
+                <Text
+                  className="font-bold"
+                  style={{
+                    color: getDisbursementFeeEstimate() === 0 ? tokens.colors.semantic.success : tokens.colors.semantic.error,
+                    fontSize: 12,
+                  }}
+                >
+                  {getDisbursementFeeEstimate() === 0
+                    ? 'KES 0.00 (Free)'
+                    : `- KES ${getDisbursementFeeEstimate().toFixed(2)}`}
                 </Text>
               </View>
-              <View className="h-px bg-slate-700/30 my-1.5" />
+              <View className="h-px bg-slate-700/20 dark:bg-slate-700/50 my-1.5" />
               <View className="flex-row justify-between">
-                <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: 12 }}>
+                <Text className="font-bold" style={{ color: activeColors.text.primary, fontSize: 13 }}>
                   Net Expected Arrival:
                 </Text>
-                <Text className="font-bold" style={{ color: tokens.colors.semantic.success, fontSize: 12 }}>
+                <Text className="font-bold" style={{ color: tokens.colors.semantic.success, fontSize: 13 }}>
                   KES {Math.max(0, parseFloat(payoutAmount || '0') - getDisbursementFeeEstimate()).toFixed(2)}
                 </Text>
               </View>
             </View>
 
             <Button
-              title={payoutLoading ? 'Initiating Payout...' : 'Request Instant Payout'}
+              title={payoutLoading ? 'Initiating Payout...' : `Request Payout via ${payoutDestType === 'loop' ? 'LOOP' : payoutDestType === 'bank_account' ? 'Bank' : 'M-Pesa'}`}
               onPress={handleRequestPayout}
               loading={payoutLoading}
               variant="primary"

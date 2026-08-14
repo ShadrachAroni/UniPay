@@ -357,12 +357,8 @@ const updateMoneyDirectionSchema = z.object({
   rules: z.array(moneyDirectionRuleItemSchema),
 });
 
-/**
- * GET /api/v1/profiles/:id/money-direction
- * Fetch money direction routing rules for profile (§17, §18)
- */
 profilesRouter.get(
-  '/:id/money-direction',
+  ['/:id/money-direction', '/:id/money-direction/rules'],
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = getParamId(req.params.id);
@@ -399,7 +395,7 @@ profilesRouter.get(
  * Update money direction routing rules for profile (§17, §18)
  */
 profilesRouter.put(
-  '/:id/money-direction',
+  ['/:id/money-direction', '/:id/money-direction/rules'],
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const parsed = updateMoneyDirectionSchema.safeParse(req.body);

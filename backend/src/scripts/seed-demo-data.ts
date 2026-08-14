@@ -18,7 +18,53 @@ export interface SeededDemoDataResult {
 }
 
 export async function seedDemoData(): Promise<SeededDemoDataResult> {
-  rootLogger.info('Starting Phase 10 Demo Data Seeding...');
+  rootLogger.info('Starting Phase 10 Demo Data Seeding & Reset...');
+
+  // 0. Clean reset of existing demo records (idempotent reset)
+  const demoClerkIds = ['user_amina', 'user_ken', 'user_freshbites', 'user_unverified_ind'];
+  const demoAliases = ['@amina', '@ken', '@freshbites', '@unverified_ind'];
+
+  try {
+    const { pool } = await import('../db');
+    const { rows: existingProfiles } = await pool.query(
+      `SELECT id FROM profiles WHERE clerk_user_id = ANY($1)`,
+      [demoClerkIds]
+    );
+    const profileIds = existingProfiles.map((r: any) => r.id);
+
+    if (profileIds.length > 0) {
+      await pool.query(`DELETE FROM reconciliation_matches WHERE profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM payment_intents WHERE recipient_profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM money_direction_rules WHERE profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM reconciliation_exceptions WHERE profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM disputes WHERE transaction_id IN (SELECT id FROM transactions WHERE recipient_profile_id = ANY($1))`, [profileIds]);
+      await pool.query(`DELETE FROM payouts WHERE profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM transactions WHERE recipient_profile_id = ANY($1)`, [profileIds]);
+      await pool.query(`DELETE FROM aliases WHERE profile_id = ANY($1) OR alias = ANY($2)`, [profileIds, demoAliases]);
+      await pool.query(`DELETE FROM profiles WHERE id = ANY($1)`, [profileIds]);
+    } else {
+      await pool.query(`DELETE FROM aliases WHERE alias = ANY($1)`, [demoAliases]);
+    }
+  } catch (cleanErr) {
+    rootLogger.debug('Cleanup notice during demo reset', { error: (cleanErr as Error).message });
+  }
+
+  // Clear in-memory caches
+  const { clearProfileCache } = await import('../services/profileService');
+  const { clearAliasCache } = await import('../services/aliasService');
+  const { clearTransactionCache } = await import('../services/transactionService');
+  const { clearPayoutCache } = await import('../services/payoutService');
+  const { clearReconciliationCache } = await import('../services/reconciliationService');
+  const { clearAdminUserCache } = await import('../services/adminService');
+  const { clearPaymentIntentCache } = await import('../services/paymentIntentService');
+
+  clearProfileCache();
+  clearAliasCache();
+  clearTransactionCache();
+  clearPayoutCache();
+  clearReconciliationCache();
+  clearAdminUserCache();
+  clearPaymentIntentCache();
 
   // 1. Admin Accounts (§16 RBAC)
   const superAdmin = await createOrUpdateAdminUser({
@@ -297,17 +343,26 @@ export async function seedDemoData(): Promise<SeededDemoDataResult> {
 // Allow direct CLI execution: `npx tsx backend/src/scripts/seed-demo-data.ts`
 if (require.main === module) {
   seedDemoData()
-    .then((res) => {
-      console.log('✅ Demo data successfully seeded!');
+    .then(async (res) => {
+      console.log('✅ Demo data successfully seeded & reset!');
       console.log(`- Amina Profile ID: ${res.aminaProfile.id}`);
       console.log(`- Ken Profile ID: ${res.kenProfile.id}`);
       console.log(`- FreshBites Profile ID: ${res.freshBitesProfile.id}`);
+      console.log(`- Unverified Individual ID: ${res.unverifiedIndProfile.id}`);
       console.log(`- Transactions Seeded: ${res.transactionsCount}`);
       console.log(`- Payouts Seeded: ${res.payoutsCount}`);
+      try {
+        const { pool } = await import('../db');
+        await pool.end();
+      } catch {}
       process.exit(0);
     })
-    .catch((err) => {
+    .catch(async (err) => {
       console.error('❌ Error seeding demo data:', err);
+      try {
+        const { pool } = await import('../db');
+        await pool.end();
+      } catch {}
       process.exit(1);
     });
 }

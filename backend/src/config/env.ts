@@ -17,6 +17,7 @@ const envSchema = z.object({
   DB_POOL_SIZE: z.coerce.number().default(10),
   CLERK_SECRET_KEY: z.string().optional(),
   CLERK_PUBLISHABLE_KEY: z.string().optional(),
+  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
   OPENROUTER_REQUEST_TIMEOUT_MS: z.coerce.number().default(15000),

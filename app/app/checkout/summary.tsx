@@ -47,7 +47,7 @@ export default function GuestCheckoutSummaryScreen() {
       }
 
       try {
-        const estimate = await getFeeEstimate(rawAmount);
+        const estimate = await getFeeEstimate(rawAmount, params.alias);
         setFeeBreakdown(estimate);
       } catch (error) {
         console.error(error);
@@ -56,10 +56,10 @@ export default function GuestCheckoutSummaryScreen() {
       }
     }
     loadFee();
-  }, [rawAmount]);
+  }, [rawAmount, params.alias]);
 
   const handlePayNow = async () => {
-    if (!payerPhone || payerPhone.length < 10) {
+    if (!payerPhone || payerPhone.length < 9) {
       return;
     }
     if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
@@ -70,8 +70,9 @@ export default function GuestCheckoutSummaryScreen() {
     try {
       const intent = await createPaymentIntent(
         rawAmount,
-        params.recipientId || 'prof_1',
+        params.recipientId || 'p-1001',
         payerPhone,
+        params.alias
       );
       router.push({
         pathname: '/checkout/pending',
@@ -80,6 +81,7 @@ export default function GuestCheckoutSummaryScreen() {
           payerPhone,
           amount: rawAmount.toString(),
           recipientName: params.recipientName || 'Merchant',
+          providerReference: intent.provider_reference || '',
         },
       });
     } catch (error) {

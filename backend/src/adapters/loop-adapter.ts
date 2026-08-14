@@ -24,6 +24,18 @@ export interface LoopAdapterOptions {
   timeoutMs?: number;
 }
 
+export function formatKenyanPhone(rawPhone: string): string {
+  let cleaned = rawPhone.replace(/\D/g, '');
+  if (cleaned.startsWith('0')) {
+    cleaned = '254' + cleaned.substring(1);
+  } else if (cleaned.startsWith('254')) {
+    // already 254
+  } else if (cleaned.length === 9 && (cleaned.startsWith('7') || cleaned.startsWith('1'))) {
+    cleaned = '254' + cleaned;
+  }
+  return cleaned;
+}
+
 export function generateLoopHmacSignature(
   merchantTill: string,
   timestamp: string,
@@ -194,7 +206,8 @@ export class LoopAdapter implements PaymentProviderAdapter {
       (request.metadata as any)?.traceId ||
       crypto.randomUUID();
 
-    const payerPhone = request.payerPhone || request.payerIdentifier || '';
+    const rawPhone = request.payerPhone || request.payerIdentifier || '';
+    const payerPhone = formatKenyanPhone(rawPhone);
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const nonce = crypto.randomUUID().toLowerCase();
     const signature = generateLoopHmacSignature(this.merchantTill, timestamp, nonce, this.secretKey);
@@ -415,6 +428,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
       throw new Error('Recipient mobile number or account identifier is required for LOOP disbursement.');
     }
 
+    const recipientPhone = formatKenyanPhone(request.recipientIdentifier);
     const traceId = (request as any).traceId || (request as any).trace_id || crypto.randomUUID();
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const nonce = crypto.randomUUID().toLowerCase();
@@ -425,7 +439,7 @@ export class LoopAdapter implements PaymentProviderAdapter {
       txnReference: request.idempotencyKey,
       requestParameters: {
         merchantTill: this.merchantTill,
-        mobileNo: request.recipientIdentifier,
+        mobileNo: recipientPhone,
         amount: request.amount.toFixed(2),
         currency: request.currency,
         remarks: request.remarks || 'UniPay Disbursement',
