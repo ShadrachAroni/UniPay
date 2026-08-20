@@ -53,6 +53,6 @@
     "metro-transform-worker": "0.81.5"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "typescript": "^7.0.2"
   }
 }
