@@ -30,7 +30,7 @@
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^8.0.1",
     "@types/react": "~18.3.12",
     "metro": "0.81.5",
     "metro-config": "0.81.5",
